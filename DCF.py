@@ -75,17 +75,11 @@ class DCF:
         if self.ticker == 
 
 
-
-
-
-
         # 10 Year
         # Companies in mature and stable industries with predictable growth patterns can benefit from a longer-term projection.
         # Companies with long-term capital investments and infrastructure projects, such as utilities or real estate, may require a longer projection period to accurately reflect their cash flows.
         # Industries with long product development and life cycles (e.g., pharmaceuticals, aerospace) might need a longer DCF period to capture the return on their investments.
         # High-growth companies that are expected to scale significantly over a decade may require a longer projection period to capture the expected expansion in their cash flows.
-        
-
         
         if ten_year_dcf < five_year_dcf:
             print("5-year DCF is more appropriate due to high volatility.")
@@ -93,7 +87,6 @@ class DCF:
         else:
             print("10-year DCF is more appropriate due to stable conditions.")
             total_timeframe = 10
-
 
 
     def discounted_cashflows(self):
@@ -122,22 +115,12 @@ class DCF:
 
         else:
 
-            
-
-
-
-
-
-
         # Financials for Reinvestment Analysis
         # (Net Capex + Change in Net Working Capital) / (Net Operating Profit After Taxes)
         
-        
         # ROE method of growth estimation
 
-        # 
-
-
+        # Reinvestment Rate * Return on Capital
 
         for year in years:
             ebit_average = data.get('estimatedEbitAvg')
@@ -149,8 +132,6 @@ class DCF:
         for values in ebit_average:
             fcff_discounted =  values - reinvestment
 
-            
-
     def wacc(self, risk_free_rate):
         
             # Calculation of market cap weighted industry unlevered beta
@@ -158,14 +139,10 @@ class DCF:
             endpoint = 'stock_peers'
             peer_list = self.request(version, endpoint).get('peersList')
 
-
-
             market_cap = {}
             beta = {}
 
-
-
-            for company in peer_list:
+            for company in peer_list:   
                 version = 'v3'
                 endpoint = 'profile'
                 try:
@@ -175,84 +152,53 @@ class DCF:
                 except:
                     continue  # If there is an error, skip this company
                 
-
-
             # Filter out companies that don't have both beta and market cap
             market_cap = {company: cap for company, cap in market_cap.items() if company in beta and cap is not None and beta[company] is not None}
-
-
 
             # Calculate total market capitalization
             total_market_cap = sum(market_cap.values())
 
-
-
             weighted_beta_sum = 0
-
-
 
             for company, cap in market_cap.items():
                 weight = cap / total_market_cap
                 weighted_beta_sum += weight * beta[company]
 
-    
-
-
             debt = self.yf_finance.balance_sheet.loc[]
             equity = 
 
-
-
             debt_to_equity_ratio = debt / equity
-
-
 
             cost_of_debt = 0.05     
         
-
-
             # grab equity risk premiums for segmented revenue streams
             version = 'v4'
             endpoint = 'market_risk_premium'
 
-
-
             market_risk_premiums = self.requests(version, endpoint)
-
-
 
             # grab segmented revenue streams
             version = 'v4'
             endpoint = 'revenue-geographic-segmentation'
 
-
-
             segmented_revenue = self.requests(version, endpoint)
 
-
-
             equity_risk_premium =
-    
-
 
             cost_of_equity = risk_free_rate + beta * equity_risk_premium
-
-
 
             # Calculate WACC
             equity_weight = 1 / (1 + debt_to_equity_ratio)
             debt_weight = debt_to_equity_ratio / (1 + debt_to_equity_ratio)
             wacc = (equity_weight * cost_of_equity) + (debt_weight * cost_of_debt * (1 - 0.21))  # Assuming 21% tax rate
-            
-
-
+        
             return wacc
 
     def terminal(self):
         final_year = 
+        terminal_value = (ebit (1-tax_rate) (1-reinvestment_rate)) / (cost_of_capital - expected_growth)
         terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
         return value
-
 
 
     def fair_value(self):
@@ -273,8 +219,6 @@ class DCF:
             print(f"Error occurred while processing {self.ticker}: {e}")
             return None
         
-
-
     def assumptions(self):
         print(f'Expected Ebit Margins == {ebit_margins}')
 
@@ -283,8 +227,6 @@ class DCF:
     api_key = os.getenv('API_KEY')
     if api_key is None:
         raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
-    
-
 
 if __name__ == "__main__":
     start_time = time.time()

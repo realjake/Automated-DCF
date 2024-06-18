@@ -14,7 +14,7 @@ if api_key is None:
 
 # List of stock symbols
 symbols = [
-    "AMZN", "CRM", "UNH", "META", "ULTA", "GOOG", "MA", "INTU", "SPGI", "DPZ",
+    "CDRE", "CRM", "UNH", "META", "ULTA", "GOOG", "MA", "INTU", "SPGI", "DPZ",
     "MSFT", "WM", "V", "EXP", "S", "ADBE", "AMAT", "CMG", "TXRH", "MELI", 
     "META", "NVDA", "VRTX", "EVVTY", "CRWD", "KO", "ADSK", "DHI", "PYPL", 
     "PLTR", "CCJ", "HAL"
@@ -22,7 +22,7 @@ symbols = [
 
 # Loop through each symbol and fetch ratings
 for symbol in symbols:
-    url = f"https://financialmodelingprep.com/api/v3/rating/{symbol}?apikey={api_key}"
+    url = f"https://financialmodelingprep.com/api/v3/analyst-estimates/{symbol}?apikey={api_key}"
     
     try:
         # Make the request to API
@@ -36,7 +36,7 @@ for symbol in symbols:
             if isinstance(data, list):
                 # Example of handling if data is a list:
                 if len(data) > 0:
-                    rating_data = data[0].get('rating')
+                    rating_data = data[0].get('estimatedEbitAvg')
                     print(f"Rating for {symbol}: {rating_data}")
                 else:
                     print(f"No rating data found for {symbol}")

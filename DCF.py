@@ -1,124 +1,295 @@
 import requests
 from dotenv import load_dotenv
 import os
-import pandas as pd
 from finvizfinance.quote import *
 import yfinance as yf
 import numpy as np
-import matplotlib as plt
-
+import time
 
 # Load environment variables from .env file
 load_dotenv()
 
-
 class DCF:
-    def __init__(self, ticker, api_key): 
-        self.ticker = ticker
+    def __init__(self, symbol, api_key): 
+        self.symbol = symbol
         self.api_key = api_key
-        
+        self.yf_finance = yf.Ticker(self.symbol) 
 
-   
-        
-    def cashflows(self):
-
-
-    def wacc(self):
-
-
-    def equity(self):
+    def request(self, version, endpoint, ticker=None):
         try:
-            stock = yf.Ticker(self.ticker)
-            non_current_assets = stock.quarterly_balance_sheet.loc['Total Non Current Assets'].iloc[0]
-            net_liabilities = stock.quarterly_balance_sheet.loc['Total Liabilities Net Minority Interest'].iloc[0]
-            cash = stock.quarterly_balance_sheet.loc['Cash Cash Equivalents And Short Term Investments'].iloc[0]
-            shares_outstanding = stock.quarterly_balance_sheet.loc['Ordinary Shares Number'].iloc[0]
+             
+            if ticker is None:
+                ticker_symbol = self.symbol  
+
+            else:
+                ticker_symbol = ticker
+
+            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}{ticker_symbol}?apikey={self.api_key}"
+
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                return data
+            
         except Exception as e:
             print(f"Error occurred while processing {self.ticker}: {e}")
             return None
+    
+
+    def timeframe(self):
+        # Finding "appropiate" time frame of the DCF
+        ten_year_dcf = 0
+        five_year_dcf = 0
+
+        # If the company operates in an industry with high volatility or rapid change, long-term projections may be highly uncertain and less reliable.
         
-    Revenues
-Growth Rate
+        standard deviation
+        Revenue Growth Variability
+        Industry Beta
+        External Factors
+        stock_data = yf.download(self.ticker, period='5y', interval='1d')
+        stock_returns = stock_data['Close'].pct_change().dropna()
+        stock_volatility = np.std(stock_returns)
+        
+    
+        revenue_volatility = np.std(self.revenue_growth_history)
+        
+        if stock_volatility > market_volatility * 1.5 or revenue_volatility > industry_revenue_volatility * 1.5 or self.industry_beta > 1.2:
+            
 
-Operating Income
-Operating Margin
-
-Tax Rate
-
-
-EBIT (1-t)
-
-
-Reinvestment
-% OF NOPAT
-
-FCFF
-
-Cost of Equity
-Cost of Debt
-AT Cost of Debt
-Cost of Capital
+        # Startups or early-stage companies with unpredictable growth trajectories often have less reliable forecasts beyond 5 years.
 
 
+        # Industries with shorter business cycles (e.g., technology, fashion) might not benefit from a longer-term projection since market conditions can change drastically over a decade.
+
+
+        # If there's insufficient historical data to make credible long-term forecasts, a shorter horizon might be more appropriate.
+
+
+        # Mature companies with stable and predictable cash flows might not need a longer projection period. The stable nature of their business can be adequately captured in a 5-year model, and the terminal value can account for subsequent periods.
+        
+
+        # Industries prone to significant regulatory or technological changes may find it challenging to predict beyond 5 years.
+
+        if self.ticker == 
+
+
+
+
+
+
+        # 10 Year
+        # Companies in mature and stable industries with predictable growth patterns can benefit from a longer-term projection.
+        # Companies with long-term capital investments and infrastructure projects, such as utilities or real estate, may require a longer projection period to accurately reflect their cash flows.
+        # Industries with long product development and life cycles (e.g., pharmaceuticals, aerospace) might need a longer DCF period to capture the return on their investments.
+        # High-growth companies that are expected to scale significantly over a decade may require a longer projection period to capture the expected expansion in their cash flows.
+        
+
+        
+        if ten_year_dcf < five_year_dcf:
+            print("5-year DCF is more appropriate due to high volatility.")
+            total_timeframe = 5
+        else:
+            print("10-year DCF is more appropriate due to stable conditions.")
+            total_timeframe = 10
+
+
+
+    def discounted_cashflows(self):
+
+        # Analyst Estimates
+        version = 'v3'
+        endpoint = 'analyst-estimates'
+
+        estimate_data = self.request(version, endpoint)
+
+        current_year = time.localtime().tm_year
+        indexed_year = current_year
+
+        # Checking to see length of estimates
+        for entry in estimate_data:
+        
+            if indexed_year in entry['date']:
+                indexed_year + 1
+            else:
+                analyst_timeframe = indexed_year - current_year
+                print(f'Total Years of Analyst Estimation = {(analyst_timeframe)}')
+        
+    
+        if indexed_year - current_year < 5:
+            print(f'Calculating / estimating next {analyst_timeframe - total_timeframe}')
+
+        else:
+
+            
+
+
+
+
+
+
+        # Financials for Reinvestment Analysis
+        # (Net Capex + Change in Net Working Capital) / (Net Operating Profit After Taxes)
+        
+        
+        # ROE method of growth estimation
+
+        # 
+
+
+
+        for year in years:
+            ebit_average = data.get('estimatedEbitAvg')
+
+            reinvestment_rate = 
+
+            reinvestment = np.mean(reinvestment_rate)   
+
+        for values in ebit_average:
+            fcff_discounted =  values - reinvestment
+
+            
+
+    def wacc(self, risk_free_rate):
+        
+            # Calculation of market cap weighted industry unlevered beta
+            version = 'v4'
+            endpoint = 'stock_peers'
+            peer_list = self.request(version, endpoint).get('peersList')
+
+
+
+            market_cap = {}
+            beta = {}
+
+
+
+            for company in peer_list:
+                version = 'v3'
+                endpoint = 'profile'
+                try:
+                    company_data = self.request(version, endpoint, company)
+                    beta[company] = company_data.get('beta')
+                    market_cap[company] = company_data.get('mktCap')
+                except:
+                    continue  # If there is an error, skip this company
+                
+
+
+            # Filter out companies that don't have both beta and market cap
+            market_cap = {company: cap for company, cap in market_cap.items() if company in beta and cap is not None and beta[company] is not None}
+
+
+
+            # Calculate total market capitalization
+            total_market_cap = sum(market_cap.values())
+
+
+
+            weighted_beta_sum = 0
+
+
+
+            for company, cap in market_cap.items():
+                weight = cap / total_market_cap
+                weighted_beta_sum += weight * beta[company]
 
     
 
 
-    # List of stock symbols
-    symbols = [
-        "AMZN", "CRM", "UNH", "META", "ULTA", "GOOG", "MA", "INTU", "SPGI", "DPZ",
-        "MSFT", "WM", "V", "EXP", "S", "ADBE", "AMAT", "CMG", "TXRH", "MELI", 
-        "META", "NVDA", "VRTX", "EVVTY", "CRWD", "KO", "ADSK", "DHI", "PYPL", 
-        "PLTR", "CCJ", "HAL"
-    ]
-
-    # Loop through each symbol and fetch ratings
-    for symbol in symbols:
-        url = f"https://financialmodelingprep.com/api/v3/analyst-estimates/{symbol}?apikey={api_key}"
+            debt = self.yf_finance.balance_sheet.loc[]
+            equity = 
 
 
 
+            debt_to_equity_ratio = debt / equity
+
+
+
+            cost_of_debt = 0.05     
+        
+
+
+            # grab equity risk premiums for segmented revenue streams
+            version = 'v4'
+            endpoint = 'market_risk_premium'
+
+
+
+            market_risk_premiums = self.requests(version, endpoint)
+
+
+
+            # grab segmented revenue streams
+            version = 'v4'
+            endpoint = 'revenue-geographic-segmentation'
+
+
+
+            segmented_revenue = self.requests(version, endpoint)
+
+
+
+            equity_risk_premium =
+    
+
+
+            cost_of_equity = risk_free_rate + beta * equity_risk_premium
+
+
+
+            # Calculate WACC
+            equity_weight = 1 / (1 + debt_to_equity_ratio)
+            debt_weight = debt_to_equity_ratio / (1 + debt_to_equity_ratio)
+            wacc = (equity_weight * cost_of_equity) + (debt_weight * cost_of_debt * (1 - 0.21))  # Assuming 21% tax rate
+            
+
+
+            return wacc
+
+    def terminal(self):
+        final_year = 
+        terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
+        return value
+
+
+
+    def fair_value(self):
         try:
-            # Make the request to API
-            response = requests.get(url)
+            
+            terminal_fcff = 
+            
+            non_current_assets = self.yf_finance.stock.quarterly_balance_sheet.loc['Total Non Current Assets'].iloc[0]
+            net_liabilities = self.yf_finance.quarterly_balance_sheet.loc['Total Liabilities Net Minority Interest'].iloc[0]
+            cash = self.yf_finance.quarterly_balance_sheet.loc['Cash Cash Equivalents And Short Term Investments'].iloc[0]
+            shares_outstanding = self.yf_finance.quarterly_balance_sheet.loc['Ordinary Shares Number'].iloc[0]
 
-            # Check if the request was successful (status code 200)
-            if response.status_code == 200:
-                data = response.json()
+            equity_value = sum(fcff_discounted) + terminal_fcff + non_current_assets + cash - net_liabilities 
+            fair_value = equity_value / shares_outstanding
+            return fair_value
 
-                # Check if data is a list (handle special cases)
-                if isinstance(data, list):
-                    # Example of handling if data is a list:
-                    if len(data) > 0:
-                        rating_data = data[0].get('rating')
-                        print(f"Rating for {symbol}: {rating_data}")
-                    else:
-                        print(f"No rating data found for {symbol}")
-                elif isinstance(data, dict):
-                    # Example of handling if data is a dictionary:
-                    rating_data = data.get('rating')
-                    if rating_data:
-                        print(f"Rating for {symbol}: {rating_data}")
-                    else:
-                        print(f"No rating data found for {symbol}")
-                else:
-                    print(f"Unexpected data format received for {symbol}")
+        except Exception as e:
+            print(f"Error occurred while processing {self.ticker}: {e}")
+            return None
+        
 
-            else:
-                # Print an error message if request was not successful
-                print(f"Error: Status Code {response.status_code}")
-                # You might want to print response.text for more details
 
-        except requests.exceptions.RequestException as e:
-            # Handle any exception that occurred during the request
-            print(f"Request error: {e}")
-
-        except json.JSONDecodeError as e:
-            # Handle JSON decoding errors
-            print(f"JSON decoding error: {e}")
+    def assumptions(self):
+        print(f'Expected Ebit Margins == {ebit_margins}')
 
 
 
     api_key = os.getenv('API_KEY')
     if api_key is None:
-        raise ValueError("API_KEY not found in environment variables. Please set it in your .env file.")
+        raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
+    
+
+
+if __name__ == "__main__":
+    start_time = time.time()
+    DCF = DCF() 
+    ratios = updater.get_ratios()
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Time taken: {elapsed_time} seconds")

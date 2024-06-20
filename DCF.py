@@ -15,7 +15,7 @@ class DCF:
         self.api_key = api_key
         self.yf_finance = yf.Ticker(self.symbol) 
 
-    def request(self, version, endpoint, ticker=None):
+    def request(self, version, endpoint, ticker=None, period=None):
         try:
              
             if ticker is None:
@@ -24,7 +24,10 @@ class DCF:
             else:
                 ticker_symbol = ticker
 
-            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}{ticker_symbol}?apikey={self.api_key}"
+            period_str = f'period={period}&' if period and (period == 'quarterly' or period == 'annual') else ''
+
+            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{ticker_symbol}?{period_str}apikey={api_key}"
+            print(f"Request URL: {url}") 
 
             response = requests.get(url)
 
@@ -33,9 +36,52 @@ class DCF:
                 return data
             
         except Exception as e:
-            print(f"Error occurred while processing {self.ticker}: {e}")
+            print(f"Error occurred while processing {self.ticker}: {response.status_code} {e}")
             return None
     
+
+    def industry_beta(self):
+        # Industry Beta
+
+        market_caps = []
+        industry_betas = []
+        peer_list = 
+
+        for stock in peer_list:
+            version = 'v3'
+            endpoint = 'profile'
+
+            # Grab levered beta
+            data = self.request(version, endpoint, stock)
+            data_df = pd.DataFrame(data)
+            beta = data_df.loc['beta']
+
+
+            # Grab quarterly balance sheet
+            version = 'v3'
+            endpoint = 'balance-sheet-statement'
+            
+
+            balance_sheet = self.request(version, endpoint, stock)
+            balance_sheet_df = pd.DataFrame(data)
+            
+
+            # Grab quarterly balance sheet
+
+            
+            tax_rate = 
+            debt = 
+            equity = 
+
+            # Unlever the beta
+            beta_unlevered = beta / (1 + (1-tax_rate) * (debt / equity ))
+            mkt_cap = 1
+            industry_betas.append(beta_unlevered)
+            market_caps.append(mkt_cap)
+
+        # Calculate unlevered industry beta
+        industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
+
 
     def timeframe(self):
         # Finding "appropiate" time frame of the DCF
@@ -44,23 +90,35 @@ class DCF:
 
         # If the company operates in an industry with high volatility or rapid change, long-term projections may be highly uncertain and less reliable.
         
-        standard deviation
-        Revenue Growth Variability
-        Industry Beta
-        External Factors
+        #standard deviation
+        
+        #Revenue Growth Variability
+        
+        
+
+        
+
+        if self.industry_beta > 1.5:
+            five_year_dcf += 1
+
+
+        #External Factors
+        
         stock_data = yf.download(self.ticker, period='5y', interval='1d')
         stock_returns = stock_data['Close'].pct_change().dropna()
         stock_volatility = np.std(stock_returns)
         
     
         revenue_volatility = np.std(self.revenue_growth_history)
-        
         if stock_volatility > market_volatility * 1.5 or revenue_volatility > industry_revenue_volatility * 1.5 or self.industry_beta > 1.2:
+            ten_year_dcf += 1
             
 
         # Startups or early-stage companies with unpredictable growth trajectories often have less reliable forecasts beyond 5 years.
-
-
+        stock_lifetime = 
+        if stock_lifetime < 5:
+            five_year_dcf += 1
+        
         # Industries with shorter business cycles (e.g., technology, fashion) might not benefit from a longer-term projection since market conditions can change drastically over a decade.
 
 
@@ -96,13 +154,13 @@ class DCF:
         endpoint = 'analyst-estimates'
 
         estimate_data = self.request(version, endpoint)
-
-        current_year = time.localtime().tm_year
+        estimate_data = pd.DataFrame(estimate_data).set_index('date')
+        current_year = time.localtime().tm_year 
         indexed_year = current_year
 
         # Checking to see length of estimates
         for entry in estimate_data:
-        
+            
             if indexed_year in entry['date']:
                 indexed_year + 1
             else:

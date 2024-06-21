@@ -237,9 +237,9 @@ class DCF:
 
     def assumptions(self):
         print(f'Expected Ebit Margins == {ebit_margins}')
-        print(f'Expected Ebit Margins == {ebit_margins}')
-        print(f'Expected Ebit Margins == {ebit_margins}')
-        print(f'Expected Ebit Margins == {ebit_margins}')
+        print(f'Expected Rev Growth == {ebit_margins}')
+        print(f'Expected Tax Rate == {ebit_margins}')
+        print(f'Expected FCFF == {ebit_margins}')
 
 
     def fair_value(self):

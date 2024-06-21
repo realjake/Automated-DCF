@@ -82,9 +82,9 @@ class DCF:
 
 
         # Calculate unlevered industry beta
-        industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
+        unlevered_industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
 
-        return industry_beta
+        return unlevered_industry_beta
 
 
     def timeframe(self):
@@ -203,62 +203,26 @@ class DCF:
         for values in ebit_average:
             fcff_discounted =  values - reinvestment
 
+
+        global final_year_fcff
+        final_year_fcff = fcff_discounted[-1]
+
     def wacc(self, risk_free_rate):
         
-            # Calculation of market cap weighted industry unlevered beta
-            version = 'v4'
-            endpoint = 'stock_peers'
-            peer_list = self.request(version, endpoint).get('peersList')
-
-            market_cap = {}
-            beta = {}
-
-            for company in peer_list:   
-                version = 'v3'
-                endpoint = 'profile'
-                try:
-                    company_data = self.request(version, endpoint, company)
-                    beta[company] = company_data.get('beta')
-                    market_cap[company] = company_data.get('mktCap')
-                except:
-                    continue  # If there is an error, skip this company
-                
-            # Filter out companies that don't have both beta and market cap
-            market_cap = {company: cap for company, cap in market_cap.items() if company in beta and cap is not None and beta[company] is not None}
-
-            # Calculate total market capitalization
-            total_market_cap = sum(market_cap.values())
-
-            weighted_beta_sum = 0
-
-            for company, cap in market_cap.items():
-                weight = cap / total_market_cap
-                weighted_beta_sum += weight * beta[company]
-
-            debt = self.yf_finance.balance_sheet.loc[]
-            equity = 
-
-            debt_to_equity_ratio = debt / equity
-
-            cost_of_debt = 0.05     
-        
-            # grab equity risk premiums for segmented revenue streams
+            # Grab equity risk premiums for segmented revenue streams
             version = 'v4'
             endpoint = 'market_risk_premium'
 
             market_risk_premiums = self.requests(version, endpoint)
 
-            # grab segmented revenue streams
-            version = 'v4'
-            endpoint = 'revenue-geographic-segmentation'
+            # Grab segmented revenue streams
+            segmented_revenue = self.requests('v4', 'revenue-geographic-segmentation')
 
-            segmented_revenue = self.requests(version, endpoint)
-
-            equity_risk_premium =
+            equity_risk_premium = weight * revenue_stream
 
             cost_of_equity = risk_free_rate + beta * equity_risk_premium
 
-            # Calculate WACC
+            # Calculate WACC & Relever beta
             equity_weight = 1 / (1 + debt_to_equity_ratio)
             debt_weight = debt_to_equity_ratio / (1 + debt_to_equity_ratio)
             wacc = (equity_weight * cost_of_equity) + (debt_weight * cost_of_debt * (1 - 0.21))  # Assuming 21% tax rate
@@ -266,7 +230,7 @@ class DCF:
             return wacc
 
     def terminal(self):
-        final_year = 
+        final_year_fcff = 
         terminal_value = (ebit (1-tax_rate) (1-reinvestment_rate)) / (cost_of_capital - expected_growth)
         terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
         return value
@@ -281,7 +245,7 @@ class DCF:
     def fair_value(self):
         try:
             self.assumptions
-            
+
 
             terminal_fcff = 
             

@@ -2,12 +2,13 @@ import requests
 from dotenv import load_dotenv
 import os
 from finvizfinance.quote import *
+import statsmodels.api as sm
 import yfinance as yf
 import numpy as np
 import time
 
 # Load environment variables from .env file
-load_dotenv()
+
 
 class DCF:
     def __init__(self, symbol, api_key): 
@@ -36,7 +37,7 @@ class DCF:
                 return data
             
         except Exception as e:
-            
+
             print(f"Error occurred while processing {self.ticker}: {response.status_code} {e}")
             return None
     
@@ -47,6 +48,11 @@ class DCF:
         market_caps = []
         industry_betas = []
         peer_list = []
+
+        # Grab Company Peers
+        peer_list = self.request('v4', 'stock_peers')
+        peer_list_df = pd.DataFrame(peer_list)
+        peer_list = peer_list_df.loc['peersList']
 
         for stock in peer_list:
 
@@ -63,15 +69,17 @@ class DCF:
             income_statement = self.request('v3', 'income-statement', stock, 'quarterly')
             income_statement_df = pd.DataFrame(income_statement)
 
+            # Tax, Debt & Equity info
             tax_rate = income_statement_df.loc['incomeBeforeTaxRatio']
             debt = balance_sheet_df.loc['totalDebt']
             equity = balance_sheet_df.loc['totalEquity']
 
             # Unlever the beta
             beta_unlevered = beta / (1 + (1-tax_rate) * (debt / equity ))
-            mkt_cap = 1
+            mkt_cap = data_df.loc['mktCap']
             industry_betas.append(beta_unlevered)
             market_caps.append(mkt_cap)
+
 
         # Calculate unlevered industry beta
         industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
@@ -83,24 +91,36 @@ class DCF:
         # Finding "appropiate" time frame of the DCF
         ten_year_dcf = 0
         five_year_dcf = 0
+        
+        # Revenue Growth Variability
+        income_statement = self.request('v3', 'income-statement',self.ticker, 'quarterly')
+        income_statement_df = pd.DataFrame(income_statement).set_index('date')
+        income_statement_df['revenue'] = income_statement_df['revenue'].astype(float)
+
+        revenue_growth_list = []
+        for i in range(1, len(income_statement_df.index[:10])):
+            current_revenue = income_statement_df.iloc[i]['revenue']
+            previous_revenue = income_statement_df.iloc[i-1]['revenue']
+            rev_growth = (current_revenue - previous_revenue) / previous_revenue
+    
+            revenue_growth_list.append(rev_growth)
+
+        revenue_growth_series = pd.Series(revenue_growth_list)
+        revenue_growth_variability = revenue_growth_series.std()
+
+        print(f'Revenue Growth Variablity = {revenue_growth_variability}')
+
 
         # If the company operates in an industry with high volatility or rapid change, long-term projections may be highly uncertain and less reliable.
-        
-        #standard deviation
-        
-        #Revenue Growth Variability
-    
         if self.industry_beta() > 1.5:
             five_year_dcf += 1
 
-
-        #External Factors
-        
+        # External Factors
         stock_data = yf.download(self.ticker, period='5y', interval='1d')
         stock_returns = stock_data['Close'].pct_change().dropna()
         stock_volatility = np.std(stock_returns)
         
-    
+        # Standard deviation
         revenue_volatility = np.std(self.revenue_growth_history)
         if stock_volatility > market_volatility * 1.5 or revenue_volatility > industry_revenue_volatility * 1.5 or self.industry_beta > 1.2:
             ten_year_dcf += 1
@@ -133,10 +153,10 @@ class DCF:
         
         if ten_year_dcf < five_year_dcf:
             print("5-year DCF is more appropriate due to high volatility.")
-            total_timeframe = 5
+            return '5'
         else:
             print("10-year DCF is more appropriate due to stable conditions.")
-            total_timeframe = 10
+            return '10'
 
 
     def discounted_cashflows(self):
@@ -159,9 +179,8 @@ class DCF:
                 analyst_timeframe = indexed_year - current_year
                 print(f'Total Years of Analyst Estimation = {(analyst_timeframe)}')
         
-    
         if indexed_year - current_year < 5:
-            print(f'Calculating / estimating next {analyst_timeframe - total_timeframe}')
+            print(f'Calculating / estimating next {analyst_timeframe - self.timeframe}')
 
         else:
 
@@ -170,6 +189,8 @@ class DCF:
         
         # ROE method of growth estimation
 
+
+        # EBIT estimate
         # Reinvestment Rate * Return on Capital
 
         for year in years:
@@ -250,10 +271,18 @@ class DCF:
         terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
         return value
 
+    def assumptions(self):
+        print(f'Expected Ebit Margins == {ebit_margins}')
+        print(f'Expected Ebit Margins == {ebit_margins}')
+        print(f'Expected Ebit Margins == {ebit_margins}')
+        print(f'Expected Ebit Margins == {ebit_margins}')
+
 
     def fair_value(self):
         try:
+            self.assumptions
             
+
             terminal_fcff = 
             
             non_current_assets = self.yf_finance.stock.quarterly_balance_sheet.loc['Total Non Current Assets'].iloc[0]
@@ -269,19 +298,20 @@ class DCF:
             print(f"Error occurred while processing {self.ticker}: {e}")
             return None
         
-    def assumptions(self):
-        print(f'Expected Ebit Margins == {ebit_margins}')
 
 
 
-    api_key = os.getenv('API_KEY')
-    if api_key is None:
-        raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
 
 if __name__ == "__main__":
     start_time = time.time()
-    DCF = DCF() 
-    ratios = updater.get_ratios()
+    load_dotenv()
+    ticker = 'AMZN'
+    api_key =os.getenv('API_KEY')
+    if api_key is None:
+        raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
+    DCF = DCF(ticker, api_key) 
+    fair_value = DCF.fair_value
+    print(f'Based on estimates, the fair value for {ticker} = {fair_value}')
     end_time = time.time()
     elapsed_time = end_time - start_time
     print(f"Time taken: {elapsed_time} seconds")

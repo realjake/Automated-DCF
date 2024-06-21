@@ -36,6 +36,7 @@ class DCF:
                 return data
             
         except Exception as e:
+            
             print(f"Error occurred while processing {self.ticker}: {response.status_code} {e}")
             return None
     
@@ -45,33 +46,26 @@ class DCF:
 
         market_caps = []
         industry_betas = []
-        peer_list = 
+        peer_list = []
 
         for stock in peer_list:
-            version = 'v3'
-            endpoint = 'profile'
 
             # Grab levered beta
-            data = self.request(version, endpoint, stock)
+            data = self.request('v3', 'profile', stock)
             data_df = pd.DataFrame(data)
             beta = data_df.loc['beta']
 
-
             # Grab quarterly balance sheet
-            version = 'v3'
-            endpoint = 'balance-sheet-statement'
+            balance_sheet = self.request('v3', 'balance-sheet-statement', stock, 'quarterly')
+            balance_sheet_df = pd.DataFrame(balance_sheet)
             
+            # Grab quarterly income statment
+            income_statement = self.request('v3', 'income-statement', stock, 'quarterly')
+            income_statement_df = pd.DataFrame(income_statement)
 
-            balance_sheet = self.request(version, endpoint, stock)
-            balance_sheet_df = pd.DataFrame(data)
-            
-
-            # Grab quarterly balance sheet
-
-            
-            tax_rate = 
-            debt = 
-            equity = 
+            tax_rate = income_statement_df.loc['incomeBeforeTaxRatio']
+            debt = balance_sheet_df.loc['totalDebt']
+            equity = balance_sheet_df.loc['totalEquity']
 
             # Unlever the beta
             beta_unlevered = beta / (1 + (1-tax_rate) * (debt / equity ))
@@ -81,6 +75,8 @@ class DCF:
 
         # Calculate unlevered industry beta
         industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
+
+        return industry_beta
 
 
     def timeframe(self):
@@ -93,12 +89,8 @@ class DCF:
         #standard deviation
         
         #Revenue Growth Variability
-        
-        
-
-        
-
-        if self.industry_beta > 1.5:
+    
+        if self.industry_beta() > 1.5:
             five_year_dcf += 1
 
 

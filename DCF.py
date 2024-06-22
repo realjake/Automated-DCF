@@ -7,8 +7,6 @@ import yfinance as yf
 import numpy as np
 import time
 
-# Load environment variables from .env file
-
 
 class DCF:
     def __init__(self, symbol, api_key): 
@@ -38,7 +36,7 @@ class DCF:
             
         except Exception as e:
 
-            print(f"Error occurred while processing {self.ticker}: {response.status_code} {e}")
+            print(f"Error occurred while processing {ticker_symbol}: {response.status_code} {e}")
             return None
     
 
@@ -110,7 +108,6 @@ class DCF:
 
         print(f'Revenue Growth Variablity = {revenue_growth_variability}')
 
-
         # If the company operates in an industry with high volatility or rapid change, long-term projections may be highly uncertain and less reliable.
         if self.industry_beta() > 1.5:
             five_year_dcf += 1
@@ -119,13 +116,7 @@ class DCF:
         stock_data = yf.download(self.ticker, period='5y', interval='1d')
         stock_returns = stock_data['Close'].pct_change().dropna()
         stock_volatility = np.std(stock_returns)
-        
-        # Standard deviation
-        revenue_volatility = np.std(self.revenue_growth_history)
-        if stock_volatility > market_volatility * 1.5 or revenue_volatility > industry_revenue_volatility * 1.5 or self.industry_beta > 1.2:
-            ten_year_dcf += 1
             
-
         # Startups or early-stage companies with unpredictable growth trajectories often have less reliable forecasts beyond 5 years.
         stock_lifetime = 
         if stock_lifetime < 5:
@@ -218,7 +209,7 @@ class DCF:
             # Grab segmented revenue streams
             segmented_revenue = self.requests('v4', 'revenue-geographic-segmentation')
 
-            equity_risk_premium = weight * revenue_stream
+            equity_risk_premium = weight * revenue_stream       
 
             cost_of_equity = risk_free_rate + beta * equity_risk_premium
 
@@ -237,15 +228,14 @@ class DCF:
 
     def assumptions(self):
         print(f'Expected Ebit Margins == {ebit_margins}')
-        print(f'Expected Rev Growth == {ebit_margins}')
-        print(f'Expected Tax Rate == {ebit_margins}')
-        print(f'Expected FCFF == {ebit_margins}')
+        print(f'Expected Rev Growth == {rev_growth}')
+        print(f'Expected Tax Rate == {tax_rate}')
+        print(f'Expected FCFF == {fcff}')
 
 
     def fair_value(self):
         try:
             self.assumptions
-
 
             terminal_fcff = 
             

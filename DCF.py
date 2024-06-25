@@ -100,13 +100,11 @@ class DiscountedCashFlows:
         if balance_sheet and income_statement and cash_flow_statement:
             reinvestment_rate_list = []
             for date in cash_flow_statement.index[:20]:
-                depreciation_and_amortization = cash_flow_statement.loc[date, 'depreciationAndAmortization']
-                capex = cash_flow_statement.loc[date, 'capitalExpenditure']
-                net_capex = capex - depreciation_and_amortization 
+                depreciation_and_amortization = income_statement.loc[date, 'depreciationAndAmortization']
+                net_capex = cash_flow_statement.loc[date, 'capitalExpenditure'] - depreciation_and_amortization
                 change_in_working_capital = cash_flow_statement.loc[date, 'changeInWorkingCapital']
                 ebitda = income_statement.loc[date, 'ebitda']
                 tax_rate = (income_statement.loc[date, 'incomeTaxExpense']) / (income_statement.loc[date, 'incomeBeforeTax'])
-                depreciation_and_amortization = income_statement.loc[date, 'depreciationAndAmortization']
                 ebit = ebitda - depreciation_and_amortization
                 nopat = ebit * (1 - tax_rate)
                 reinvestment_rate = (net_capex + change_in_working_capital) / nopat

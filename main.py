@@ -166,7 +166,7 @@ class DiscountedCashFlows:
         # Finding "appropiate" time frame of the DCF
         # Startup / Hyper Growth / Self-Funding / Operating Leverage / Capital Return / Decline
         # Discounted Cash Flows work best in Stage 4 & 5.
-        
+
         ten_year_dcf = 0
         five_year_dcf = 0
         
@@ -275,7 +275,7 @@ class DiscountedCashFlows:
             return timeframe
     
 
-    def wacc(self, risk_free_rate):
+    def wacc(self):
             
             balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', self.symbol, 'quarterly'))
             income_statement = pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'quarterly'))
@@ -310,6 +310,8 @@ class DiscountedCashFlows:
 
                 # The assumption being in this example which ever the country that the company resides in will be the equity risk premium
 
+                risk_free_rate = yf.download("^IRX")["Adj Close"].iloc[-1]
+
                 relevered_beta = self.industry_beta() * (1 + debt_to_equity_ratio * (1 - tax_rate))
 
                 cost_of_equity = risk_free_rate + relevered_beta * equity_risk_premium
@@ -318,16 +320,22 @@ class DiscountedCashFlows:
             
                 credit_risk = cost_of_debt - risk_free_rate
 
-                predicted_risk_free = []
+                predicted_rfr_list = []
 
-                for years in time
+                for i in range(timeframe):
+                    prediction_year = i + current_year
+                    
+                    predicted_rfr = 
 
+
+
+                    predicted_rfr_list.append(predicted_rfr)
                 # API Call to FRED (Fed Dot Plot)
 
                 if i == timeframe:
                     cost_of_debt
                 else:
-                    cost_of_debt = predicted_risk_free + buffer
+                    cost_of_debt = predicted_risk_free + credit_risk
 
                 
                 print(f'Cost of Debt in {i + current_year} for {self.symbol} is {cost_of_debt}')
@@ -386,7 +394,7 @@ class DiscountedCashFlows:
             for year in analyst_timeframe:
                 ebit_average = estimate_data.loc['estimatedEbitAvg'][year]
 
-                reinvestment_rate =
+                reinvestment_rate = 1
 
             for values, i, in ebit_average:
                 fcff = ((values *(1-tax_rate[i])) - reinvestment) * (1 + wacc[values])
@@ -401,7 +409,7 @@ class DiscountedCashFlows:
 
 
     def terminal(self):
-        final_year_fcff = 
+        final_year_fcff = 1
         terminal_value = (ebit (1-tax_rate) (1-reinvestment_rate)) / (cost_of_capital - expected_growth)
         terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
         return value
@@ -462,11 +470,11 @@ if __name__ == "__main__":
     ticker = 'AMZN'
 
     fmp_api_key = os.getenv('FMP_API_KEY')
-    
+    fred_api_key = os.getenv('FRED_API_KEY')
     if fmp_api_key is None:
         raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
     
-    DCF = DiscountedCashFlows(ticker, fmp_api_key) 
+    DCF = DiscountedCashFlows(ticker, fmp_api_key, fred_api_key) 
 
     fair_value = DiscountedCashFlows.fair_value
 

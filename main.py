@@ -32,7 +32,7 @@ class DiscountedCashFlows:
 
             period_str = f'period={period}&' if period and (period == 'quarterly' or period == 'annual') else ''
 
-            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{ticker_symbol}?{period_str}apikey={api_key}"
+            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{ticker_symbol}?{period_str}apikey={fmp_api_key}"
             print(f"Request URL: {url}") 
 
             response = requests.get(url)
@@ -305,37 +305,42 @@ class DiscountedCashFlows:
             
             equity_risk_premium = pd.DataFrame(self.request('v4', 'market_risk_premium', self.symbol)).loc[country_name]
 
+            risk_free_rate = yf.download("^IRX")["Adj Close"].iloc[-1]
+
+            relevered_beta = self.industry_beta() * (1 + debt_to_equity_ratio * (1 - tax_rate))
 
             for i in range(timeframe):
 
                 # The assumption being in this example which ever the country that the company resides in will be the equity risk premium
 
-                risk_free_rate = yf.download("^IRX")["Adj Close"].iloc[-1]
-
-                relevered_beta = self.industry_beta() * (1 + debt_to_equity_ratio * (1 - tax_rate))
-
-                cost_of_equity = risk_free_rate + relevered_beta * equity_risk_premium
-
-                # Prediction of cost of debt for future risk free rates
+                cost_of_equity = risk_free_rate + relevered_beta * equity_risk_premium                
             
                 credit_risk = cost_of_debt - risk_free_rate
 
                 predicted_rfr_list = []
 
+                # Prediction of cost of debt for future risk free rates
                 for i in range(timeframe):
                     prediction_year = i + current_year
+
+                    url = f"apikey={self.fred_api_key}"
+                    print(f"Request URL: {url}") 
+
+                    response = requests.get(url)
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        return data
                     
                     predicted_rfr = 
 
-
-
                     predicted_rfr_list.append(predicted_rfr)
-                # API Call to FRED (Fed Dot Plot)
+                    
 
-                if i == timeframe:
-                    cost_of_debt
-                else:
-                    cost_of_debt = predicted_risk_free + credit_risk
+                    if i == timeframe:
+                        cost_of_debt
+                    else:
+                        cost_of_debt = predicted_risk_free + credit_risk
 
                 
                 print(f'Cost of Debt in {i + current_year} for {self.symbol} is {cost_of_debt}')

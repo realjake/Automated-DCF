@@ -4,11 +4,14 @@ from datetime import datetime
 import statsmodels.api as sm
 from scipy import stats
 import yfinance as yf
+import pandas as pd
 import numpy as np
 import requests
 import time
+import csv
 import os
 import re
+
 
 # Source
 # https://pages.stern.nyu.edu/~adamodar/New_Home_Page/valquestions/growth.htm#:~:text=The%20reinvestment%20rate%20for%20a,the%20course%20of%20the%20year.
@@ -19,6 +22,7 @@ class DiscountedCashFlows:
         self.symbol = symbol
         self.api_key = api_key
         self.yf_finance = yf.Ticker(self.symbol) 
+
 
     def request(self, version, endpoint, ticker=None, period=None):
         try:
@@ -42,6 +46,7 @@ class DiscountedCashFlows:
             print(f"Error occurred while processing {ticker_symbol}: {response.status_code} {e}")
             return None
     
+
     def global_data(self):
 
         # This function creates global variables that can be reused throughout the program.
@@ -55,17 +60,29 @@ class DiscountedCashFlows:
         global current_year
         current_year = time.localtime().tm_year 
 
+        global peer_list
+        # Grab Company Peers
+        peer_list = self.request('v4', 'stock_peers')
+        peer_list_df = pd.DataFrame(peer_list)
+        peer_list = peer_list_df.loc['peersList']
+
+
+    def load_country_abbreviations(csv_file):
+        country_dict = {}
+        with open(csv_file, mode='r', newline='', encoding='utf-8') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                country_dict[row[1].strip()] = row[0].strip()
+        return country_dict
+
+
     def industry_beta(self):
 
         # Industry Beta
         market_caps = []
         industry_betas = []
         peer_list = []
-
-        # Grab Company Peers
-        peer_list = self.request('v4', 'stock_peers')
-        peer_list_df = pd.DataFrame(peer_list)
-        peer_list = peer_list_df.loc['peersList']
 
         for stock in peer_list:
 
@@ -91,12 +108,12 @@ class DiscountedCashFlows:
             industry_betas.append(beta_unlevered)
             market_caps.append(mkt_cap)
 
-
         # Calculate unlevered industry beta
         unlevered_industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
 
         return unlevered_industry_beta
     
+
     def reinvestment_rate(self, ticker):
         balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', self.symbol, 'annual')).set_index('date')
         income_statement =  pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'annual')).set_index('date')
@@ -116,23 +133,30 @@ class DiscountedCashFlows:
         else:
             print(f"ERROR WITH REINVESTMENT DATAFRAMES {ticker}")
             exit(1)
+            
         return reinvestment_rate_list
     
 
     def final_reinvestment_rate(self):
-        # Reinvestment Rate is calculcated through industry rates & average historical rate
+        # Reinvestment Rate is calculated through industry rates & average historical rate
         reinvestment_rate_final = 0
+        industry_reinvestment_rates = []
 
         # Historical Trimmed Mean Reinvestment Rate
-        reinvestment_average = stats.trim_mean(self.reinvestment_rate(self.symbol), 0.1) # Trim 10% at both ends
+        reinvestment_average = stats.trim_mean(self.reinvestment_rate(self.symbol), 0.5) # Trim 5% at both ends
         
         # Grab weighted average industry reinvestment rate + trimmed mean average historical reinvestment rate
-        
         print(f"Average Reinvestment Rate for {self.symbol} = {reinvestment_average}")
-        industry_reinvestment_rate_list = 
-        industry_reinvestment_average = stats.trim_mean(industry_reinvestment_rate_list, 0.1) # Trim 10% at both ends
+
+        for stock in peer_list:
+
+            rr = self.reinvestment_rate(stock)
+            industry_reinvestment_rates.append(rr)
+
+        industry_reinvestment_average = stats.trim_mean(industry_reinvestment_rates, 0.1) # Trim 10% at both ends
         print(f"Average Industry Reinvestment Rate for {self.symbol} = {industry_reinvestment_average}")
-        reinvestment_rate_final = 
+        reinvestment_rate_final = industry_reinvestment_average - reinvestment_average
+
         return reinvestment_rate_final
 
 
@@ -245,11 +269,22 @@ class DiscountedCashFlows:
 
             wacc_list = []
 
-            for i in range(timeframe):
+            # While I realize this should be the weighted market risk premium for the segemented revenue stream- 
+            # it is not achievable in the data provided by Financial Modeling Prep
+            country = profile.loc["country"]
+            
+            csv_file = 'countries.csv'  
+            
+            country_mapping = self.load_country_abbreviations(csv_file)
+            if country in country_mapping:
+                country_name = country_mapping[country]
+            else:
+                print(f'Cannot find {country} in Country Mapping CSV File')
+            
+            equity_risk_premium = pd.DataFrame(self.request('v4', 'market_risk_premium', self.symbol)).loc[country_name]
 
-                # While I realize this should be the weighted market risk premium for the segemented revenue stream- it is not achievable in the data provided by Financial Modeling Prep
-                country = 
-                equity_risk_premium = .loc[country]
+
+            for i in range(timeframe):
 
                 # The assumption being in this example which ever the country that the company resides in will be the equity risk premium
 
@@ -258,27 +293,23 @@ class DiscountedCashFlows:
                 cost_of_equity = risk_free_rate + relevered_beta * equity_risk_premium
 
                 # Prediction of cost of debt for future risk free rates
-                
-                buffer = risk_free_rate - cost_of_debt
+            
+                credit_risk = cost_of_debt - risk_free_rate
 
                 predicted_risk_free = []
 
-                for 
+                for years in time
 
                 # API Call to FRED (Fed Dot Plot)
-                
-
-
 
                 if i == timeframe:
                     cost_of_debt
                 else:
                     cost_of_debt = predicted_risk_free + buffer
 
-
                 
-                print(f'Cost of Debt for {self.symbol} = {cost_of_debt}')
-                print(f'Cost of Equity for {self.symbol} = {cost_of_equity}')
+                print(f'Cost of Debt in {i + current_year} for {self.symbol} is {cost_of_debt}')
+                print(f'Cost of Equity in {i + current_year} for {self.symbol} is {cost_of_equity}')
 
                 # Calculate WACC & Relever beta
                 equity_weight = 1 / (1 + debt_to_equity_ratio)
@@ -333,10 +364,7 @@ class DiscountedCashFlows:
             for year in analyst_timeframe:
                 ebit_average = estimate_data.loc['estimatedEbitAvg'][year]
 
-                reinvestment_rate = 
-
-                reinvestment = np.mean(reinvestment_rate)   
-
+                reinvestment_rate =
 
             for values, i, in ebit_average:
                 fcff = ((values *(1-tax_rate[i])) - reinvestment) * (1 + wacc[values])
@@ -349,11 +377,13 @@ class DiscountedCashFlows:
 
             return fcff_discounted
 
+
     def terminal(self):
         final_year_fcff = 
         terminal_value = (ebit (1-tax_rate) (1-reinvestment_rate)) / (cost_of_capital - expected_growth)
         terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
         return value
+
 
     def assumptions(self):
         print(f'Expected Ebit Margins == {ebit_margins}')
@@ -401,10 +431,7 @@ class DiscountedCashFlows:
             print(f"Error occurred while processing {self.symbol}: {e}")
             return None
         
-
-
-
-
+        
 if __name__ == "__main__":
     start_time = time.time()
 

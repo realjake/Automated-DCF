@@ -1,11 +1,18 @@
 from finvizfinance.quote import *
 from dotenv import load_dotenv
+from datetime import datetime
 import statsmodels.api as sm
+from scipy import stats
 import yfinance as yf
 import numpy as np
 import requests
 import time
 import os
+import re
+
+# Source
+# https://pages.stern.nyu.edu/~adamodar/New_Home_Page/valquestions/growth.htm#:~:text=The%20reinvestment%20rate%20for%20a,the%20course%20of%20the%20year.
+
 
 class DiscountedCashFlows:
     def __init__(self, symbol, api_key): 
@@ -35,13 +42,15 @@ class DiscountedCashFlows:
             print(f"Error occurred while processing {ticker_symbol}: {response.status_code} {e}")
             return None
     
-    def stock_data(self):
+    def global_data(self):
 
         # This function creates global variables that can be reused throughout the program.
-        global profile 
-        profile = 
-        global balance_sheet_df = 
 
+        global profile 
+        profile = pd.DataFrame(self.request('v3', 'profile', self.symbol))
+
+        global perpetual_growth_rate
+        perpetual_growth_rate =  yf.download("^IRX")["Adj Close"].iloc[-1]
 
     def industry_beta(self):
 
@@ -58,26 +67,23 @@ class DiscountedCashFlows:
         for stock in peer_list:
 
             # Grab levered beta
-            data = self.request('v3', 'profile', stock)
-            data_df = pd.DataFrame(data)    
-            beta = data_df.loc['beta']
+            profile_data = pd.DataFrame(self.request('v3', 'profile', stock))
+            beta = profile_data.loc['beta']
 
             # Grab quarterly balance sheet
-            balance_sheet = self.request('v3', 'balance-sheet-statement', stock, 'quarterly')
-            balance_sheet_df = pd.DataFrame(balance_sheet)
-            
+            balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', stock, 'quarterly'))
+
             # Grab quarterly income statment
-            income_statement = self.request('v3', 'income-statement', stock, 'quarterly')
-            income_statement_df = pd.DataFrame(income_statement)
+            income_statement = pd.DataFrame(self.request('v3', 'income-statement', stock, 'quarterly'))
 
             # Tax, Debt & Equity info
-            tax_rate = income_statement_df.loc['incomeBeforeTaxRatio']
-            debt = balance_sheet_df.loc['totalDebt']
-            equity = balance_sheet_df.loc['totalEquity']
+            tax_rate = income_statement.loc['incomeBeforeTaxRatio']
+            debt = balance_sheet.loc['totalDebt']
+            equity = balance_sheet.loc['totalEquity']
 
             # Unlever the beta
             beta_unlevered = beta / (1 + (1-tax_rate) * (debt / equity ))
-            mkt_cap = data_df.loc['mktCap']
+            mkt_cap = profile_data.loc['mktCap']
             industry_betas.append(beta_unlevered)
             market_caps.append(mkt_cap)
 
@@ -86,19 +92,52 @@ class DiscountedCashFlows:
         unlevered_industry_beta = sum(beta * cap for beta, cap in zip(industry_betas, market_caps))
 
         return unlevered_industry_beta
+    
+    def reinvestment_rate(self, ticker):
+        balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', self.symbol, 'annual')).set_index('date')
+        income_statement =  pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'annual')).set_index('date')
+        cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', self.symbol, 'annual')).set_index('date')
+        if balance_sheet and income_statement and cash_flow_statement:
+            reinvestment_rate_list = []
+            for date in cash_flow_statement.index[:20]:
+                depreciation_and_amortization = cash_flow_statement.loc[date, 'depreciationAndAmortization']
+                capex = cash_flow_statement.loc[date, 'capitalExpenditure']
+                net_capex = capex - depreciation_and_amortization 
+                change_in_working_capital = cash_flow_statement.loc[date, 'changeInWorkingCapital']
+                ebitda = income_statement.loc[date, 'ebitda']
+                tax_rate = (income_statement.loc[date, 'incomeTaxExpense']) / (income_statement.loc[date, 'incomeBeforeTax'])
+                depreciation_and_amortization = income_statement.loc[date, 'depreciationAndAmortization']
+                ebit = ebitda - depreciation_and_amortization
+                nopat = ebit * (1 - tax_rate)
+                reinvestment_rate = (net_capex + change_in_working_capital) / nopat
+                reinvestment_rate_list.append((date, reinvestment_rate))
+        else:
+            print(f"ERROR WITH REINVESTMENT DATAFRAMES {ticker}")
+            exit(1)
+        return reinvestment_rate_list
+    
+
+    def final_reinvestment_rate(self):
+        # Reinvestment Rate is calculcated through industry rates & average historical rate
+        reinvestment_rate_final = 0
+
+        # Historical Trimmed Mean Reinvestment Rate
+        reinvestment_average = stats.trim_mean(self.reinvestment_rate(self.symbol), 0.1) # Trim 10% at both ends
+        
+        # Grab weighted average industry reinvestment rate + trimmed mean average historical reinvestment rate
+        
+        print(f"Average Reinvestment Rate for {self.symbol} = {reinvestment_average}")
+        industry_reinvestment_rate_list = 
+        industry_reinvestment_average = stats.trim_mean(industry_reinvestment_rate_list, 0.1) # Trim 10% at both ends
+        print(f"Average Industry Reinvestment Rate for {self.symbol} = {industry_reinvestment_average}")
+        reinvestment_rate_final = 
+        return reinvestment_rate_final
 
 
-    def reinvestment_rate(self):
-
-        # Grab weighted average reinvestment rate + historical reinvestment rate
-
-
-        pass
-
-    def timeframe(self):
-
+    def timeframe(self):	
         # Finding "appropiate" time frame of the DCF
         # Startup / Hyper Growth / Self-Funding / Operating Leverage / Capital Return / Decline
+        # Discounted Cash Flows work best in Stage 4 & 5.
         ten_year_dcf = 0
         five_year_dcf = 0
         
@@ -125,9 +164,41 @@ class DiscountedCashFlows:
             five_year_dcf += 1
 
         # Startups or early-stage companies with unpredictable growth trajectories often have less reliable forecasts beyond 5 years.
-        stock_lifetime = 
-        if stock_lifetime < 5:
-            five_year_dcf += 1
+
+        if 'description' in profile.index:
+            description = profile.loc['description']
+
+            # Use regex to find the incorporation year in the description
+            match = re.search(r'incorporated in (\d{4})', description)
+
+            if match:
+                incorporation_year = int(match.group(1))
+
+                # Calculate the number of years since incorporation
+                current_year = datetime.now().year
+                stock_lifetime = current_year - incorporation_year
+            else:
+                print("Incorporation year not found in the description.")
+        elif:
+            if 'ipoDate' in profile.index:
+                ipo_date_string = profile.loc['ipoDate']
+                ipo_year = datetime.strptime(ipo_date_string, "%Y-%m-%d").year
+
+                # Calculate the stock lifetime in years
+                current_year = datetime.now().year
+                stock_lifetime = current_year - ipo_year
+            else:
+                print("IPO Date is missing or invalid.")
+
+            # Increment five_year_dcf if the stock lifetime is less than 5 years
+            if stock_lifetime < 5:
+                five_year_dcf += 1
+        else:
+            pass
+       
+        # Print the extracted year and stock lifetime
+        print(f"Incorporation Year: {incorporation_year}")
+        print(f"Stock Lifetime: {stock_lifetime} years")
 
 
         # If there's insufficient historical data to make credible long-term forecasts, a shorter horizon might be more appropriate.
@@ -156,14 +227,12 @@ class DiscountedCashFlows:
             print("10-year DCF is more appropriate due to stable conditions.")
             timeframe = '10'
             return timeframe
-
-
     
 
     def wacc(self, risk_free_rate):
             
             # Grab segmented revenue streams
-            segmented_revenue = self.request('v4', 'revenue-geographic-segmentation')
+            segmented_revenue = pd.DataFrame(self.request('v4', 'revenue-geographic-segmentation'))
 
             # Grab equity risk premiums for segmented revenue streams
             version = 'v4'
@@ -178,8 +247,9 @@ class DiscountedCashFlows:
 
 
 
-           
 
+
+           
             equity_risk_premium = weight * revenue_stream       
 
             cost_of_equity = risk_free_rate + beta * equity_risk_premium
@@ -242,8 +312,8 @@ class DiscountedCashFlows:
                 reinvestment = np.mean(reinvestment_rate)   
 
 
-            for values in ebit_average:
-                fcff = (values - reinvestment) * (1 + wacc[values])
+            for values, i, in ebit_average:
+                fcff = ((values *(1-tax_rate[i])) - reinvestment) * (1 + wacc[values])
 
                 fcff_discounted.append(fcff)
 
@@ -268,16 +338,18 @@ class DiscountedCashFlows:
 
     def fair_value(self):
         try:
-            self.stock_data
+            self.global_data
             self.industry_beta
             self.reinvestment_rate
             self.timeframe
             self.wacc
+            
             self.terminal
             self.assumptions
 
-            terminal_fcff = 
+            terminal_fcff = (final_year_fcff * (1+ self.wacc[-1])) / (self.wacc[-1]) / ()
             
+            # Grab from Yahoo Finance, Firm Value & Current Share Count
             non_current_assets = self.yf_finance.quarterly_balance_sheet.loc['Total Non Current Assets'].iloc[0]
             net_liabilities = self.yf_finance.quarterly_balance_sheet.loc['Total Liabilities Net Minority Interest'].iloc[0]
             cash = self.yf_finance.quarterly_balance_sheet.loc['Cash Cash Equivalents And Short Term Investments'].iloc[0]
@@ -286,13 +358,21 @@ class DiscountedCashFlows:
             equity_value = sum(self.discounted_cashflows) + terminal_fcff + non_current_assets + cash - net_liabilities 
             fair_value = equity_value / shares_outstanding
 
-            current_market_cap = profile.loc['mktCap'] 
-            percentage_difference = (current_market_cap - fair_value) / current_market_cap
-            print("The percentage difference between the current market cap and the fair value is: %.2f%%" % (percentage_difference * 100))
+            if 'mktCap' in profile.index and fair_value is not None:
+                try:
+                    # Retrieve the current market cap from the DataFrame
+                    current_market_cap = profile.loc['mktCap']
+
+                    # Calculate the percentage difference
+                    percentage_difference = (current_market_cap - fair_value) / current_market_cap
+                    print("The percentage difference between the current market cap and the fair value is: %.2f%%" % (percentage_difference * 100))
+                except:
+                    pass
+            
             return fair_value
 
         except Exception as e:
-            print(f"Error occurred while processing {self.ticker}: {e}")
+            print(f"Error occurred while processing {self.symbol}: {e}")
             return None
         
 

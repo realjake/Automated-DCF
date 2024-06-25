@@ -51,6 +51,9 @@ class DiscountedCashFlows:
 
         global perpetual_growth_rate
         perpetual_growth_rate =  yf.download("^IRX")["Adj Close"].iloc[-1]
+        
+        global current_year
+        current_year = time.localtime().tm_year 
 
     def industry_beta(self):
 
@@ -77,7 +80,8 @@ class DiscountedCashFlows:
             income_statement = pd.DataFrame(self.request('v3', 'income-statement', stock, 'quarterly'))
 
             # Tax, Debt & Equity info
-            tax_rate = income_statement.loc['incomeBeforeTaxRatio']
+            tax_rate = (income_statement.loc['incomeTaxExpense'].iloc[0]) / (income_statement.loc['incomeBeforeTax'].iloc[0])
+
             debt = balance_sheet.loc['totalDebt']
             equity = balance_sheet.loc['totalEquity']
 
@@ -173,7 +177,6 @@ class DiscountedCashFlows:
                 incorporation_year = int(match.group(1))
 
                 # Calculate the number of years since incorporation
-                current_year = datetime.now().year
                 stock_lifetime = current_year - incorporation_year
             else:
                 print("Incorporation year not found in the description.")
@@ -183,7 +186,6 @@ class DiscountedCashFlows:
                 ipo_year = datetime.strptime(ipo_date_string, "%Y-%m-%d").year
 
                 # Calculate the stock lifetime in years
-                current_year = datetime.now().year
                 stock_lifetime = current_year - ipo_year
             else:
                 print("IPO Date is missing or invalid.")
@@ -229,36 +231,62 @@ class DiscountedCashFlows:
 
     def wacc(self, risk_free_rate):
             
-            # Grab segmented revenue streams
-            segmented_revenue = pd.DataFrame(self.request('v4', 'revenue-geographic-segmentation'))
-
-            # Grab equity risk premiums for segmented revenue streams
-            version = 'v4'
-            endpoint = 'market_risk_premium'
-
-            market_risk_premiums = self.request(version, endpoint)
-
-            country_list = segmented_revenue.loc[]
-
-            for countries in country_list:
-                market_risk_premiums.loc[countries]
-
-
-
-
-
-           
-            equity_risk_premium = weight * revenue_stream       
-
-            cost_of_equity = risk_free_rate + beta * equity_risk_premium
-
-            # Calculate WACC & Relever beta
-            equity_weight = 1 / (1 + debt_to_equity_ratio)
-            debt_weight = debt_to_equity_ratio / (1 + debt_to_equity_ratio)
-            wacc = (equity_weight * cost_of_equity) + (debt_weight * cost_of_debt * (1 - 0.21))  # Assuming 21% tax rate
+            balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', self.symbol, 'quarterly'))
+            income_statement = pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'quarterly'))
             
-            wacc_list = 
-            
+            debt = balance_sheet.loc['totalDebt']
+            equity = balance_sheet.loc['totalEquity'] 
+
+            tax_rate = (income_statement.loc['incomeTaxExpense'].iloc[0]) / (income_statement.loc['incomeBeforeTax'].iloc[0])
+
+            debt_to_equity_ratio = debt / equity
+
+            cost_of_debt = income_statement.loc['interestExpense'] / debt 
+
+            wacc_list = []
+
+            for i in range(timeframe):
+
+                # While I realize this should be the weighted market risk premium for the segemented revenue stream- it is not achievable in the data provided by Financial Modeling Prep
+                country = 
+                equity_risk_premium = .loc[country]
+
+                # The assumption being in this example which ever the country that the company resides in will be the equity risk premium
+
+                relevered_beta = self.industry_beta() * (1 + debt_to_equity_ratio * (1 - tax_rate))
+
+                cost_of_equity = risk_free_rate + relevered_beta * equity_risk_premium
+
+                # Prediction of cost of debt for future risk free rates
+                
+                buffer = risk_free_rate - cost_of_debt
+
+                predicted_risk_free = []
+
+                for 
+
+                # API Call to FRED (Fed Dot Plot)
+                
+
+
+
+                if i == timeframe:
+                    cost_of_debt
+                else:
+                    cost_of_debt = predicted_risk_free + buffer
+
+
+                
+                print(f'Cost of Debt for {self.symbol} = {cost_of_debt}')
+                print(f'Cost of Equity for {self.symbol} = {cost_of_equity}')
+
+                # Calculate WACC & Relever beta
+                equity_weight = 1 / (1 + debt_to_equity_ratio)
+                debt_weight = debt_to_equity_ratio / (1 + debt_to_equity_ratio)
+                wacc = (equity_weight * cost_of_equity) + (debt_weight * cost_of_debt * (1 - tax_rate))  
+
+                wacc_list.append(wacc)
+                print(f"Wacc for Year {i + current_year}")
 
 
             return wacc_list
@@ -272,7 +300,7 @@ class DiscountedCashFlows:
 
             estimate_data = self.request(version, endpoint)
             estimate_data = pd.DataFrame(estimate_data).set_index('date')
-            current_year = time.localtime().tm_year 
+            
             indexed_year = current_year
 
             # Checking to see length of estimates

@@ -5,22 +5,21 @@ import statsmodels.api as sm
 from scipy import stats
 import yfinance as yf
 import pandas as pd
-import numpy as np
 import requests
 import time
 import csv
 import os
 import re
 
-
 # Source
 # https://pages.stern.nyu.edu/~adamodar/New_Home_Page/valquestions/growth.htm#:~:text=The%20reinvestment%20rate%20for%20a,the%20course%20of%20the%20year.
 
 
 class DiscountedCashFlows:
-    def __init__(self, symbol, api_key): 
+    def __init__(self, symbol, fmp_api_key, fred_api_key): 
         self.symbol = symbol
-        self.api_key = api_key
+        self.fmp_api_key = fmp_api_key
+        self.fred_api_key = fred_api_key
         self.yf_finance = yf.Ticker(self.symbol) 
 
 
@@ -61,6 +60,7 @@ class DiscountedCashFlows:
         current_year = time.localtime().tm_year 
 
         global peer_list
+
         # Grab Company Peers
         peer_list = self.request('v4', 'stock_peers')
         peer_list_df = pd.DataFrame(peer_list)
@@ -138,7 +138,9 @@ class DiscountedCashFlows:
     
 
     def final_reinvestment_rate(self):
+
         # Reinvestment Rate is calculated through industry rates & average historical rate
+        
         reinvestment_rate_final = 0
         industry_reinvestment_rates = []
 
@@ -164,11 +166,12 @@ class DiscountedCashFlows:
         # Finding "appropiate" time frame of the DCF
         # Startup / Hyper Growth / Self-Funding / Operating Leverage / Capital Return / Decline
         # Discounted Cash Flows work best in Stage 4 & 5.
+        
         ten_year_dcf = 0
         five_year_dcf = 0
         
         # Revenue Growth Variability 
-        income_statement = self.request('v3', 'income-statement', self.ticker, 'quarterly')
+        income_statement = self.request('v3', 'income-statement', self.symbol, 'quarterly')
         income_statement_df = pd.DataFrame(income_statement).set_index('date')
         income_statement_df['revenue'] = income_statement_df['revenue'].astype(float)
 
@@ -204,16 +207,15 @@ class DiscountedCashFlows:
                 stock_lifetime = current_year - incorporation_year
             else:
                 print("Incorporation year not found in the description.")
-        elif:
-            if 'ipoDate' in profile.index:
-                ipo_date_string = profile.loc['ipoDate']
-                ipo_year = datetime.strptime(ipo_date_string, "%Y-%m-%d").year
+                if 'ipoDate' in profile.index:
+                    ipo_date_string = profile.loc['ipoDate']
+                    ipo_year = datetime.strptime(ipo_date_string, "%Y-%m-%d").year
 
-                # Calculate the stock lifetime in years
-                stock_lifetime = current_year - ipo_year
-            else:
-                print("IPO Date is missing or invalid.")
-
+                    # Calculate the stock lifetime in years
+                    stock_lifetime = current_year - ipo_year
+                else:
+                    print("IPO Date is missing or invalid.")
+        
             # Increment five_year_dcf if the stock lifetime is less than 5 years
             if stock_lifetime < 5:
                 five_year_dcf += 1
@@ -226,6 +228,15 @@ class DiscountedCashFlows:
 
 
         # If there's insufficient historical data to make credible long-term forecasts, a shorter horizon might be more appropriate.
+        cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', self.symbol, 'annual')).set_index('date')
+        if range(cash_flow_statement.index) < 3:
+            print(f'less than 3 years of historical data adding extra point for 5 year dcf')
+            five_year_dcf +=1
+
+        else:
+            print(f'more than 3 years of historical data adding extra point for 10 year dcf')
+            ten_year_dcf +=1
+
 
 
         # Mature companies with stable and predictable cash flows might not need a longer projection period. The stable nature of their business can be adequately captured in a 5-year model, and the terminal value can account for subsequent periods.
@@ -236,10 +247,21 @@ class DiscountedCashFlows:
 
         # Company in decline (lower Revenue / Gross Profit / Operating Profit / Net Profit / Increasing Share Count)
 
-        # 10 Year
-        # Companies in mature and stable industries with predictable growth patterns can benefit from a longer-term projection.
+    
         # Companies with long-term capital investments and infrastructure projects, such as utilities or real estate, may require a longer projection period to accurately reflect their cash flows.
+        sector = profile.loc["sector"]
+
+        if sector == "Real Estate" or sector == "Utilities":
+            print(f'Company in mature and stable sector. Sector of {self.symbol} == {sector}')
+            ten_year_dcf +=1
+        else:
+            print(f'Company not in mature and stable sector. Sector of {self.symbol} == {sector}')
+            five_year_dcf +=1
+        
+        
         # Industries with long product development and life cycles (e.g., pharmaceuticals, aerospace) might need a longer DCF period to capture the return on their investments.
+        
+        
         # High-growth companies that are expected to scale significantly over a decade may require a longer projection period to capture the expected expansion in their cash flows.
         global timeframe
             
@@ -439,12 +461,12 @@ if __name__ == "__main__":
 
     ticker = 'AMZN'
 
-    api_key = os.getenv('API_KEY')
+    fmp_api_key = os.getenv('FMP_API_KEY')
     
-    if api_key is None:
+    if fmp_api_key is None:
         raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
     
-    DCF = DiscountedCashFlows(ticker, api_key) 
+    DCF = DiscountedCashFlows(ticker, fmp_api_key) 
 
     fair_value = DiscountedCashFlows.fair_value
 

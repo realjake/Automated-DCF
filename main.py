@@ -118,8 +118,10 @@ class DiscountedCashFlows:
         balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', self.symbol, 'annual')).set_index('date')
         income_statement =  pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'annual')).set_index('date')
         cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', self.symbol, 'annual')).set_index('date')
+
         if balance_sheet and income_statement and cash_flow_statement:
             reinvestment_rate_list = []
+
             for date in cash_flow_statement.index[:20]:
                 depreciation_and_amortization = income_statement.loc[date, 'depreciationAndAmortization']
                 net_capex = cash_flow_statement.loc[date, 'capitalExpenditure'] - depreciation_and_amortization
@@ -128,6 +130,7 @@ class DiscountedCashFlows:
                 tax_rate = (income_statement.loc[date, 'incomeTaxExpense']) / (income_statement.loc[date, 'incomeBeforeTax'])
                 ebit = ebitda - depreciation_and_amortization
                 nopat = ebit * (1 - tax_rate)
+
                 reinvestment_rate = (net_capex + change_in_working_capital) / nopat
                 reinvestment_rate_list.append((date, reinvestment_rate))
         else:
@@ -238,14 +241,9 @@ class DiscountedCashFlows:
             ten_year_dcf +=1
 
 
-
-        # Mature companies with stable and predictable cash flows might not need a longer projection period. The stable nature of their business can be adequately captured in a 5-year model, and the terminal value can account for subsequent periods.
-        
-
-        # Industries prone to significant regulatory or technological changes may find it challenging to predict beyond 5 years.
-
-
         # Company in decline (lower Revenue / Gross Profit / Operating Profit / Net Profit / Increasing Share Count)
+        if revenue_growth <= 0 and gross_profit_growth <= 0 and operating_profit_growth <= 0 and net_profit_growth <= 0 and increasing_share_count > 0:
+            five_year_dcf += 1
 
     
         # Companies with long-term capital investments and infrastructure projects, such as utilities or real estate, may require a longer projection period to accurately reflect their cash flows.
@@ -258,10 +256,16 @@ class DiscountedCashFlows:
             print(f'Company not in mature and stable sector. Sector of {self.symbol} == {sector}')
             five_year_dcf +=1
         
-        
         # Industries with long product development and life cycles (e.g., pharmaceuticals, aerospace) might need a longer DCF period to capture the return on their investments.
-        
-        
+        industry = profile.loc["industry"]
+         
+        if industry == "Aerospace & Defense" or industry == "Biotechnology" or industry == 'Drug Manufacturers - General':
+            print(f'Company in industry with long product development Industry of {self.symbol} == {industry}')
+            ten_year_dcf +=1
+        else:
+            print(f'Company not in long product development and life cycles industry of {self.symbol} == {industry}')
+            five_year_dcf +=1
+
         # High-growth companies that are expected to scale significantly over a decade may require a longer projection period to capture the expected expansion in their cash flows.
         global timeframe
             
@@ -309,6 +313,8 @@ class DiscountedCashFlows:
 
             relevered_beta = self.industry_beta() * (1 + debt_to_equity_ratio * (1 - tax_rate))
 
+            predicted_rfr_list = []
+
             for i in range(timeframe):
 
                 # The assumption being in this example which ever the country that the company resides in will be the equity risk premium
@@ -317,30 +323,28 @@ class DiscountedCashFlows:
             
                 credit_risk = cost_of_debt - risk_free_rate
 
-                predicted_rfr_list = []
-
                 # Prediction of cost of debt for future risk free rates
-                for i in range(timeframe):
-                    prediction_year = i + current_year
+                
+                prediction_year = i + current_year
 
-                    url = f"apikey={self.fred_api_key}"
-                    print(f"Request URL: {url}") 
+                url = f"apikey={self.fred_api_key}"
+                print(f"Request URL: {url}") 
 
-                    response = requests.get(url)
+                response = requests.get(url)
 
-                    if response.status_code == 200:
-                        data = response.json()
-                        return data
-                    
-                    predicted_rfr = 
+                if response.status_code == 200:
+                    data = response.json()
+                    return data
+                
+                predicted_rfr = 
 
-                    predicted_rfr_list.append(predicted_rfr)
-                    
+                predicted_rfr_list.append(predicted_rfr)
+                print(f'WACC for {prediction_year} == {predicted_rfr}')
 
-                    if i == timeframe:
+                if i == timeframe:
                         cost_of_debt
-                    else:
-                        cost_of_debt = predicted_risk_free + credit_risk
+                else:
+                    cost_of_debt = predicted_rfr_list[i] + credit_risk
 
                 
                 print(f'Cost of Debt in {i + current_year} for {self.symbol} is {cost_of_debt}')
@@ -378,10 +382,8 @@ class DiscountedCashFlows:
                     analyst_timeframe = indexed_year - current_year
                     print(f'Total Years of Analyst Estimation = {(analyst_timeframe)}')
 
-            if indexed_year - current_year < 5:
+            if analyst_timeframe < 5:
                 print(f'Calculating / estimating next {analyst_timeframe - self.timeframe}')
-
-            else:
                 # Financials for Reinvestment Analysis
                 # (Net Capex + Change in Net Working Capital) / (Net Operating Profit After Taxes)
 
@@ -392,23 +394,33 @@ class DiscountedCashFlows:
                 # Reinvestment Rate * Return on Capital
 
 
+                
+
+            else:
+
                 pass
+
+
+                
             
             fcff_discounted = []
 
             for year in analyst_timeframe:
                 ebit_average = estimate_data.loc['estimatedEbitAvg'][year]
 
-                reinvestment_rate = 1
+                reinvestment_rate = self.final_reinvestment_rate()[0]
 
-            for values, i, in ebit_average:
-                fcff = ((values *(1-tax_rate[i])) - reinvestment) * (1 + wacc[values])
+
+
+            for values, in ebit_average:
+                fcff = ((values *(1-tax_rate[i])) * (1-reinvestment_rate) ) * (1 + wacc[values])
 
                 fcff_discounted.append(fcff)
 
 
             global final_year_fcff
             final_year_fcff = fcff_discounted[-1]
+
 
             return fcff_discounted
 

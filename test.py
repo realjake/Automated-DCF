@@ -3,13 +3,9 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 import os
-print(yf.download("^FVX")["Adj Close"].iloc[-1])
-
 
 load_dotenv()
 fmp_api_key = os.getenv('FMP_API_KEY')
-
-
 
 def request(version, endpoint, ticker=None, period=None):
         try:
@@ -33,6 +29,7 @@ def request(version, endpoint, ticker=None, period=None):
             print(f"Error occurred while processing {ticker_symbol}: {response.status_code} {e}")
             return None
 
+
 symbol = 'AAPL'
 
 
@@ -41,7 +38,11 @@ data_table = pd.DataFrame(request('v3', 'income-statement', symbol, 'annual'))
 data_table.set_index('date', inplace=True)
 previous_revenue = None
 
-for index, row in data_table.iterrows():
+data_table = data_table.tail(0)
+print(data_table)
+
+
+for index, row in data_table.index[:20]():
     revenue_current = row['revenue']
     
     if previous_revenue is not None:

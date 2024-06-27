@@ -241,24 +241,36 @@ class DiscountedCashFlows:
             ten_year_dcf +=1
 
 
-        data_table = pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'quarterly'))
+        data_table = pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'annual'))
 
         data_table.set_index('date', inplace=True)
+        
+        previous_revenue = None
 
-        for row in data_table.iterrows():
-            revenue_value = data_table[row].loc['revenue']
-            print(revenue_value)
+        data_table = data_table.tail(3)
 
+        rev_growth_list = []
 
-        revenue_growth =
+        for index, row in data_table.index[:20].iterrows():
+            revenue_current = row['revenue']
 
+            if previous_revenue is not None:
+                revenue_change = (revenue_current - previous_revenue) / previous_revenue
+                rev_growth_list.append(index, revenue_change)
 
-        gross_profit_growth = self.requests()
+                print(f"Date: {index}, Revenue: {revenue_current}, Revenue Change: {revenue_change:.2%}")
+            
+            previous_revenue = revenue_current
 
+        average_revenue_change = sum(rev_growth_list) / len(rev_growth_list)
+        print(f"Average Revenue Change: {average_revenue_change:.2%}")
+        
+
+        increasing_share_count = 
 
 
         # Company in decline (lower Revenue / Gross Profit / Operating Profit / Net Profit / Increasing Share Count)
-        if revenue_growth <= 0 and gross_profit_growth <= 0 and operating_profit_growth <= 0 and net_profit_growth <= 0 and increasing_share_count > 0:
+        if average_revenue_change <= 0 and increasing_share_count > 0:
             five_year_dcf += 1
 
     

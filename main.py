@@ -241,6 +241,22 @@ class DiscountedCashFlows:
             ten_year_dcf +=1
 
 
+        data_table = pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'quarterly'))
+
+        data_table.set_index('date', inplace=True)
+
+        for row in data_table.iterrows():
+            revenue_value = data_table[row].loc['revenue']
+            print(revenue_value)
+
+
+        revenue_growth =
+
+
+        gross_profit_growth = self.requests()
+
+
+
         # Company in decline (lower Revenue / Gross Profit / Operating Profit / Net Profit / Increasing Share Count)
         if revenue_growth <= 0 and gross_profit_growth <= 0 and operating_profit_growth <= 0 and net_profit_growth <= 0 and increasing_share_count > 0:
             five_year_dcf += 1
@@ -323,11 +339,25 @@ class DiscountedCashFlows:
             
                 credit_risk = cost_of_debt - risk_free_rate
 
-                # Prediction of cost of debt for future risk free rates
+                # Prediction of cost of debt for future risk free rates 
+
+                # CME Watch Tool API
+
+
+
+
+
+                # Fed Dot Plot FRED API
+
+
+
+                url = f"https://fred.stlouisfed.org/series/FEDTARMD/?apikey={self.fred_api_key}"
                 
                 prediction_year = i + current_year
 
-                url = f"apikey={self.fred_api_key}"
+                
+
+
                 print(f"Request URL: {url}") 
 
                 response = requests.get(url)

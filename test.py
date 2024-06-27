@@ -1,11 +1,13 @@
 import yfinance as yf
 import pandas as pd
 import requests
-
-
+from dotenv import load_dotenv
+import os
 print(yf.download("^FVX")["Adj Close"].iloc[-1])
 
 
+load_dotenv()
+fmp_api_key = os.getenv('FMP_API_KEY')
 
 
 
@@ -18,7 +20,7 @@ def request(version, endpoint, ticker=None, period=None):
 
             period_str = f'period={period}&' if period and (period == 'quarterly' or period == 'annual') else ''
 
-            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{ticker_symbol}?{period_str}apikey={api_key}"
+            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{ticker_symbol}?{period_str}apikey={fmp_api_key}"
             print(f"Request URL: {url}") 
 
             response = requests.get(url)
@@ -31,11 +33,21 @@ def request(version, endpoint, ticker=None, period=None):
             print(f"Error occurred while processing {ticker_symbol}: {response.status_code} {e}")
             return None
 
+symbol = 'AAPL'
 
 
-segmented_revenue = pd.DataFrame(request('v4', 'revenue-geographic-segmentation'))
+data_table = pd.DataFrame(request('v3', 'income-statement', symbol, 'annual'))
 
-version = 'v4'
-endpoint = 'market_risk_premium'
+data_table.set_index('date', inplace=True)
+previous_revenue = None
 
-market_risk_premiums = request(version, endpoint)
+for index, row in data_table.iterrows():
+    revenue_current = row['revenue']
+    
+    if previous_revenue is not None:
+        revenue_change = (revenue_current - previous_revenue) / previous_revenue
+        print(f"Date: {index}, Revenue: {revenue_current}, Revenue Change: {revenue_change:.2%}")
+    else:
+        print(f"Date: {index}, Revenue: {revenue_current}, Revenue Change: N/A")
+    
+    previous_revenue = revenue_current

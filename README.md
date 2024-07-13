@@ -138,7 +138,7 @@ pip install -r requirements.txt
 
 <h2>Contributing</h2>
 <p>
-    We welcome contributions to enhance the functionality and accuracy of this tool. Please submit pull requests or open issues for any bugs or feature requests.
+    We welcome contributions both financial and technical insight to enhance the functionality and accuracy of this tool. Please submit pull requests or open issues for any bugs or feature requests. Feel free to contact me on Linkedin @JakeClowers
 </p>
 
 <h2>License</h2>

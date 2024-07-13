@@ -136,17 +136,7 @@ pip install -r requirements.txt
 --> AutomatedDCF / .env / FMP_API_KEY=XXXXXXXX
 ```
 
-<h2>Contributing</h2>
-<p>
-    We welcome contributions both financial and technical insight to enhance the functionality and accuracy of this tool. Please submit pull requests or open issues for any bugs or feature requests. Feel free to contact me on [Linkedin](https://www.linkedin.com/in/jakeclowers/))
-</p>
-
 <h2>License</h2>
 <p>
     This project is licensed under the MIT License. See the LICENSE file for details.
-</p>
-
-<h2>Acknowledgements</h2>
-<p>
-    Special thanks to all the contributors and the financial analyst community for providing the necessary data and insights to build this tool. 
 </p>

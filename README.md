@@ -56,7 +56,7 @@
     <li><b>Detailed Output Reports:</b>
         <ul>
             <li>Generates detailed reports on all intermediate calculations including reinvestment rates, WACC components, and FCFF.</li>
-            <li>Offers a final fair value estimation compared against current market value, including percentage difference analysis.</li>
+            <li>Offers a final fair value estimation compared against current market value, including a sensitivity analysis to see different trends.</li>
         </ul>
     </li>
     <li><b>Technical Analysis Integration:</b>

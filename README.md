@@ -1,7 +1,7 @@
 <h1 align="center" id="title">Automated Discounted Cash Flow</h1>
 
 <p id="description">
-    This tool is designed to calculate the perceived value of a company based strictly on quantitative figures. By leveraging analyst estimates for EBIT, revenue growth, current perpetual growth rates (e.g., 2-year government bond rates), and effective tax rate predictions, this project aims to provide a structured and data-driven approach to valuation.
+    This tool is designed to calculate the perceived value of a company based strictly on quantitative figures. 
 </p>
 
 <h2>Key Features</h2>

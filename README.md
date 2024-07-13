@@ -7,7 +7,7 @@
 <h2>Key Features</h2>
 <ul>
     <li><b>Quantitative Analysis:</b> Utilizes hard data from analyst estimates and market indicators.</li>
-    <li><b>DCF Calculation:</b> Automates the DCF process, providing a streamlined method to estimate the intrinsic value of companies. Measures indictators to determine whether to utilize a 5 or 10 year dcf analysis</li>
+    <li><b>DCF Calculation:</b> Automates the DCF process, providing a streamlined method to estimate the intrinsic value of companies. Measures indictators to determine whether to utilize a 5 or 10 forecast</li>
     <li><b>Customizable Inputs:</b> Allows users to input their own assumptions for various parameters to see how they affect the valuation.</li>
     <li><b>Comprehensive Output:</b> Generates detailed reports on the estimated intrinsic value, including all intermediate calculations.</li>
 </ul>

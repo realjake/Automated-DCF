@@ -56,7 +56,7 @@
     <li><b>Detailed Output Reports:</b>
         <ul>
             <li>Generates detailed reports on all intermediate calculations including reinvestment rates, WACC components, and FCFF.</li>
-            <li>Offers a final fair value estimation compared against current market value, including a sensitivity analysis to see different trends.</li>
+            <li>Offers a final fair value estimation compared against current market value, including a sensitivity analysis to see multiple outcomes.</li>
         </ul>
     </li>
     <li><b>Technical Analysis Integration:</b>
@@ -86,7 +86,7 @@
 
 <h3>Qualitative Factors</h3>
 <ul>
-    <li><b>Market Sentiment:</b> Investor psychology and market conditions can lead to deviations from intrinsic value.</li>
+    <li><b>Market Sentiment:</b> Investor psychology and market conditions can lead to deviations from intrinsic value. Since this project aims to ultiize average analyst consensus we can get a unbias population </li>
     <li><b>Competitive Landscape:</b> Industry dynamics, competitive positioning, and potential market disruptions are qualitative factors that aren't fully captured by quantitative models.</li>
     <li><b>Management Quality:</b> The effectiveness of a company's leadership and their strategic decisions can influence future performance.</li>
 </ul>

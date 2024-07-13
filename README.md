@@ -12,10 +12,7 @@
     <li><b>Comprehensive Output:</b> Generates detailed reports on the estimated intrinsic value, including all intermediate calculations.</li>
 </ul>
 
-<h2>Why DCF is Subjective</h2>
-<p>
-    While DCF is a powerful tool for valuation, it's important to understand its inherent subjectivity due to several factors:
-</p>
+
 
 <h2>Key Features</h2>
 <ul>
@@ -81,6 +78,11 @@
         </ul>
     </li>
 </ul>
+
+<h2>Why DCF is Subjective</h2>
+<p>
+    While DCF is a powerful tool for valuation, it's important to understand its inherent subjectivity due to several factors:
+</p>
 
 <h3>Qualitative Factors</h3>
 <ul>

@@ -1,15 +1,10 @@
 from finvizfinance.quote import *
 from dotenv import load_dotenv
-from datetime import datetime
-import statsmodels.api as sm
-from scipy import stats
 import yfinance as yf
 import pandas as pd
 import requests
 import time
-import csv
-import os
-import re
+import numpy as np
 
 # Source
 # https://pages.stern.nyu.edu/~adamodar/New_Home_Page/valquestions/growth.htm#:~:text=The%20reinvestment%20rate%20for%20a,the%20course%20of%20the%20year.
@@ -50,6 +45,31 @@ class DiscountedCashFlows:
 
         # This function creates global variables that can be reused throughout the program.
 
+
+        # Balance Sheet 
+
+        global balance_sheet
+
+        balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', 'quarterly'))
+
+
+        # Cash Flow Statement
+
+        global cash_flow_statement  
+
+        cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', 'quarterly'))
+
+
+        # Income Statement 
+
+        global income_statement
+
+        income_statement = pd.DataFrame(self.request('v3', 'income-statement', 'quarterly'))
+
+        
+        tax_rate = (income_statement.loc['incomeTaxExpense'].iloc[0]) / (income_statement.loc['incomeBeforeTax'].iloc[0])
+
+
         global profile 
         profile = pd.DataFrame(self.request('v3', 'profile', self.symbol))
 
@@ -66,6 +86,9 @@ class DiscountedCashFlows:
         peer_list_df = pd.DataFrame(peer_list)
         peer_list = peer_list_df.loc['peersList']
 
+        global average_tax_rate
+
+        average_tax_rate = np.mean(self.request()
 
     def load_country_abbreviations(csv_file):
         country_dict = {}
@@ -470,21 +493,28 @@ class DiscountedCashFlows:
 
 
     def terminal(self):
-        final_year_fcff = 1
-        terminal_value = (ebit (1-tax_rate) (1-reinvestment_rate)) / (cost_of_capital - expected_growth)
-        terminal_fcff = (discounted_fcff[final_year] * (1 + growth_rate) /((wacc[final_year])^final_year))
-        return value
+        final_year = len(timeframe)
+        terminal_fcff = (self.discounted_cashflows[final_year] * (1 + perpetual_growth_rate) /((self.wacc[final_year])^final_year))
+        return terminal_fcff
 
 
     def assumptions(self):
+        ebit_margins =
+        rev_growth = 
+        tax_rate = 
+        fcff = 
+
+        print(f'Assumptions for Automated DCF of {self.symbol} are as follows:')
         print(f'Expected Ebit Margins == {ebit_margins}')
         print(f'Expected Rev Growth == {rev_growth}')
-        print(f'Expected Tax Rate == {tax_rate}')
-        print(f'Expected FCFF == {fcff}')
+        print(f'Expected Tax Rate == {(tax_rate * 100):.2%}')
+        print(f'Expected FCFF for the next {timeframe} years == {sum(self.discounted_cashflows)}')
+        print(f'Terminal FCFF Growth = {perpetual_growth_rate:.2%}')
 
 
     def fair_value(self):
         try:
+
             self.global_data
             self.industry_beta
             self.reinvestment_rate
@@ -504,6 +534,15 @@ class DiscountedCashFlows:
 
             equity_value = sum(self.discounted_cashflows) + terminal_fcff + non_current_assets + cash - net_liabilities 
             fair_value = equity_value / shares_outstanding
+
+            option_upside = 'N/A'
+
+            ntm_price_target = pd.DataFrame(self.request('v4', 'price-target-summary')).iloc['lastMonthAvgPriceTarget']
+
+            current_price = pd.DataFrame(self.request('v3', 'quote-short')).iloc['price']
+
+            print(f'Estimated upside due to option pricing for the next 12 months is {option_upside}')
+            print(f'Average Analyst upside == {(ntm_price_target - current_price) / ntm_price_target}')
 
             if 'mktCap' in profile.index and fair_value is not None:
                 try:

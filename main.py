@@ -264,7 +264,7 @@ class DiscountedCashFlows:
 
         average_revenue_change = sum(rev_growth_list) / len(rev_growth_list)
         print(f"Average Revenue Change: {average_revenue_change:.2%}")
-        
+
 
         increasing_share_count = 
 
@@ -336,6 +336,8 @@ class DiscountedCashFlows:
                 print(f'Cannot find {country} in Country Mapping CSV File')
             
             equity_risk_premium = pd.DataFrame(self.request('v4', 'market_risk_premium', self.symbol)).loc[country_name]
+
+            # 3 Month T-Bill for Risk Free Rate
 
             risk_free_rate = yf.download("^IRX")["Adj Close"].iloc[-1]
 

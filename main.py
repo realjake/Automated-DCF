@@ -1,10 +1,16 @@
 from finvizfinance.quote import *
 from dotenv import load_dotenv
+from datetime import datetime
+import statsmodels.api as sm
+from scipy import stats 
 import yfinance as yf
+import numpy as np
 import pandas as pd
 import requests
 import time
-import numpy as np
+import csv
+import os
+import re
 
 # Source
 # https://pages.stern.nyu.edu/~adamodar/New_Home_Page/valquestions/growth.htm#:~:text=The%20reinvestment%20rate%20for%20a,the%20course%20of%20the%20year.
@@ -18,33 +24,37 @@ class DiscountedCashFlows:
         self.yf_finance = yf.Ticker(self.symbol) 
 
 
-    def request(self, version, endpoint, ticker=None, period=None):
+    def request(version=None, endpoint=None, symbol=None, period=None, exceptions=None):
         try:
-            if ticker is None:
-                ticker_symbol = self.symbol  
+            if symbol is None:
+                raise ValueError("Ticker symbol is required.")
+
+            if exceptions is not None:
+                url = exceptions
             else:
-                ticker_symbol = ticker
+                if version is None or endpoint is None:
+                    raise ValueError("Both version and endpoint are required if exceptions URL is not provided.")
+                period_str = f'&period={period}' if period and (period == 'quarterly' or period == 'annual') else ''
+                url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{symbol}?apikey={fmp_api_key}{period_str}"
 
-            period_str = f'period={period}&' if period and (period == 'quarterly' or period == 'annual') else ''
-
-            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{ticker_symbol}?{period_str}apikey={fmp_api_key}"
-            print(f"Request URL: {url}") 
+            print(f"Request URL: {url}")
 
             response = requests.get(url)
 
             if response.status_code == 200:
                 data = response.json()
                 return data
-            
+            else:
+                print(f"Request failed with status code: {response.status_code}")
+                return None
+
         except Exception as e:
-            print(f"Error occurred while processing {ticker_symbol}: {response.status_code} {e}")
-            return None
+            print(f"Error occurred while processing {symbol}: {e}")
     
 
     def global_data(self):
 
-        # This function creates global variables that can be reused throughout the program.
-
+        """This function creates global variables that can be reused throughout the program"""
 
         # Balance Sheet 
 
@@ -52,13 +62,11 @@ class DiscountedCashFlows:
 
         balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', 'quarterly'))
 
-
         # Cash Flow Statement
 
         global cash_flow_statement  
 
         cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', 'quarterly'))
-
 
         # Income Statement 
 
@@ -66,9 +74,7 @@ class DiscountedCashFlows:
 
         income_statement = pd.DataFrame(self.request('v3', 'income-statement', 'quarterly'))
 
-        
-        tax_rate = (income_statement.loc['incomeTaxExpense'].iloc[0]) / (income_statement.loc['incomeBeforeTax'].iloc[0])
-
+        # Global DCF Data
 
         global profile 
         profile = pd.DataFrame(self.request('v3', 'profile', self.symbol))
@@ -82,13 +88,17 @@ class DiscountedCashFlows:
         global peer_list
 
         # Grab Company Peers
+
         peer_list = self.request('v4', 'stock_peers')
         peer_list_df = pd.DataFrame(peer_list)
         peer_list = peer_list_df.loc['peersList']
 
         global average_tax_rate
+        
+        tax_rates = income_statement['incomeTaxExpense'] / income_statement['incomeBeforeTax']
+        
+        average_tax_rate = np.mean(tax_rates)
 
-        average_tax_rate = np.mean(self.request()
 
     def load_country_abbreviations(csv_file):
         country_dict = {}
@@ -138,6 +148,8 @@ class DiscountedCashFlows:
     
 
     def reinvestment_rate(self, ticker):
+        # Reinvestment Rate Analysis
+
         balance_sheet = pd.DataFrame(self.request('v3', 'balance-sheet-statement', self.symbol, 'annual')).set_index('date')
         income_statement =  pd.DataFrame(self.request('v3', 'income-statement', self.symbol, 'annual')).set_index('date')
         cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', self.symbol, 'annual')).set_index('date')
@@ -164,7 +176,6 @@ class DiscountedCashFlows:
     
 
     def final_reinvestment_rate(self):
-
         # Reinvestment Rate is calculated through industry rates & average historical rate
         
         reinvestment_rate_final = 0
@@ -247,11 +258,11 @@ class DiscountedCashFlows:
                 five_year_dcf += 1
         else:
             pass
-       
+        
         # Print the extracted year and stock lifetime
         print(f"Incorporation Year: {incorporation_year}")
         print(f"Stock Lifetime: {stock_lifetime} years")
-
+        
 
         # If there's insufficient historical data to make credible long-term forecasts, a shorter horizon might be more appropriate.
         cash_flow_statement = pd.DataFrame(self.request('v3', 'cash-flow-statement', self.symbol, 'annual')).set_index('date')
@@ -288,15 +299,35 @@ class DiscountedCashFlows:
         average_revenue_change = sum(rev_growth_list) / len(rev_growth_list)
         print(f"Average Revenue Change: {average_revenue_change:.2%}")
 
+        # Increasing share count 
 
-        increasing_share_count = 
+        url = f'https://financialmodelingprep.com/api/v4/historical/shares_float?symbol={self.symbol}&apikey={fmp_api_key}'
+        
+        increasing_share_count = pd.DataFrame(self.request(exceptions=url))
 
+        # Ensure the 'date' column is in datetime format
+        increasing_share_count['date'] = pd.to_datetime(increasing_share_count['date'])
+
+        # Sort the DataFrame by date
+        increasing_share_count = increasing_share_count.sort_values('date')
+
+        # Extract share counts for the dates a year apart
+        start_date = increasing_share_count['date'].min()
+        end_date = start_date + pd.DateOffset(years=1)
+
+        # Get the closest available data for start_date and end_date
+        start_share_count = increasing_share_count.loc[increasing_share_count['date'] <= start_date, 'outstandingShares'].iloc[-1]
+        end_share_count = increasing_share_count.loc[increasing_share_count['date'] <= end_date, 'outstandingShares'].iloc[-1]
+
+        # Calculate the percentage change
+        percentage_change = ((end_share_count - start_share_count) / start_share_count) * 100
+
+        print(f"The share count changed by {percentage_change:.2f}% over the year.")
 
         # Company in decline (lower Revenue / Gross Profit / Operating Profit / Net Profit / Increasing Share Count)
         if average_revenue_change <= 0 and increasing_share_count > 0:
             five_year_dcf += 1
 
-    
         # Companies with long-term capital investments and infrastructure projects, such as utilities or real estate, may require a longer projection period to accurately reflect their cash flows.
         sector = profile.loc["sector"]
 
@@ -348,9 +379,10 @@ class DiscountedCashFlows:
 
             # While I realize this should be the weighted market risk premium for the segemented revenue stream- 
             # it is not achievable in the data provided by Financial Modeling Prep
+
             country = profile.loc["country"]
             
-            csv_file = 'countries.csv'  
+            csv_file = 'countries.csv'
             
             country_mapping = self.load_country_abbreviations(csv_file)
             if country in country_mapping:
@@ -378,21 +410,24 @@ class DiscountedCashFlows:
 
                 # Prediction of cost of debt for future risk free rates 
 
-                # CME Watch Tool API
 
 
+                # CME Watch Tool API Coming soon
+
+
+
+                # Historically speaking, actual rates tend to overshoot both the forward curve
+                # The Fed dot plot in a raising interest rate environment and rates tend to drop faster than the the Fed dot plot had predicted
+                # Although the Fed projections and the forward curve are the best estimate we can make for future rates, neither tend to be historically accurate.
 
 
 
                 # Fed Dot Plot FRED API
 
-
-
                 url = f"https://fred.stlouisfed.org/series/FEDTARMD/?apikey={self.fred_api_key}"
                 
                 prediction_year = i + current_year
 
-                
 
 
                 print(f"Request URL: {url}") 
@@ -461,19 +496,17 @@ class DiscountedCashFlows:
                 # Reinvestment Rate * Return on Capital
 
 
-                
-
             else:
 
                 pass
 
 
-                
-            
             fcff_discounted = []
+
 
             for year in analyst_timeframe:
                 ebit_average = estimate_data.loc['estimatedEbitAvg'][year]
+
 
                 reinvestment_rate = self.final_reinvestment_rate()[0]
 
@@ -481,6 +514,7 @@ class DiscountedCashFlows:
 
             for values, in ebit_average:
                 fcff = ((values *(1-tax_rate[i])) * (1-reinvestment_rate) ) * (1 + wacc[values])
+
 
                 fcff_discounted.append(fcff)
 
@@ -563,23 +597,28 @@ class DiscountedCashFlows:
         
         
 if __name__ == "__main__":
+
     start_time = time.time()
 
-    load_dotenv()
+    load_dotenv() 
 
-    ticker = 'AMZN'
+    ticker = 'AMZN' 
 
     fmp_api_key = os.getenv('FMP_API_KEY')
     fred_api_key = os.getenv('FRED_API_KEY')
+
     if fmp_api_key is None:
-        raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep")
+        raise ValueError("API_KEY not found in environment variables. Please set it in your .env file. You can buy a subscription at Financial Modeling Prep: https://site.financialmodelingprep.com/developer/docs/pricing")
     
     DCF = DiscountedCashFlows(ticker, fmp_api_key, fred_api_key) 
 
     fair_value = DiscountedCashFlows.fair_value
 
     print(f'Based on estimates, the fair value for {ticker} = {fair_value}')
+
+    print(f'Program took {ticker} = {fair_value}')
     
     end_time = time.time()
     elapsed_time = end_time - start_time
-    print(f"Time taken: {elapsed_time} seconds")
+
+    print(f"Program took: {elapsed_time} seconds to complete")

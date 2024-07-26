@@ -31,7 +31,7 @@ Economic changes and technological progress also make it challenging to predict 
 
 
 
- [Financial Modeling Prep (PAID)](https://site.financialmodelingprep.com/developer/docs/pricing)
+ [Financial Modeling Prep](https://site.financialmodelingprep.com/developer/docs/pricing)
  
  [St. Louis Fed](https://fredaccount.stlouisfed.org/apikeys)
 

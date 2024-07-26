@@ -20,11 +20,15 @@
 
 **Key Features and Scope**
 
-This project automates Discounted Cash Flow (DCF) calculations to estimate company value, using analyst EBIT and revenue estimates along with perpetual growth rates like 2-year government bond yields. It allows for customizable inputs, such as reinvestment and tax rates, and integrates detailed financial data from various APIs, including industry metrics and macroeconomic indicators. Advanced metrics like Weighted Average Cost of Capital (WACC) and terminal value are computed.
+This project automates Discounted Cash Flow (DCF) calculations to estimate company value, using analyst EBIT and revenue estimates along with perpetual growth rates like 2-year government bond yields. 
+
+It allows for customizable inputs, such as reinvestment and tax rates, and integrates detailed financial data from various APIs, including industry metrics and macroeconomic indicators. Advanced metrics like Weighted Average Cost of Capital (WACC) and terminal value are computed.
 
 **Subjectivity in DCF Analysis**
 
-Discounted Cash Flow (DCF) analysis is inherently subjective because it relies on factors like market sentiment, competitive landscape, and the quality of management, all of which can affect valuations. Economic changes and technological progress also make it challenging to predict future performance accurately. On a short-term basis, investor sentiment and large buy or sell orders can sway stock prices, presenting opportunities for strategic trades. This program aims to offer a clearer, more rational approach to understanding the often chaotic stock market.
+Discounted Cash Flow (DCF) analysis is inherently subjective because it relies on factors like market sentiment, competitive landscape, and the quality of management, all of which can affect valuations. 
+
+Economic changes and technological progress also make it challenging to predict future performance accurately. On a short-term basis, investor sentiment and large buy or sell orders can sway stock prices, presenting opportunities for strategic trades. This program aims to offer a clearer, more rational approach to understanding the often chaotic stock market.
 
 
 <h2>🛠️ Installation Steps:</h2>

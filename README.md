@@ -4,7 +4,7 @@
     This tool is designed to calculate the perceived value of a company based strictly on quantitative figures. 
 </p>
 
-- Removing Emotions from intrinsic value
+- Removing emotions from intrinsic value
 - Ability to change and identify trends within the data
 - Capitalize on short term polarizing events that misprice quality assets
 

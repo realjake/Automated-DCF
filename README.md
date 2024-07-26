@@ -28,7 +28,9 @@ Economic changes and technological progress also make it challenging to predict 
 > **Tip** For this program to function you will need to create an account and pay for some of these apis below
 
 **APIS**
+
  [Financial Modeling Prep (PAID)](https://site.financialmodelingprep.com/developer/docs/pricing)
+ 
  [St. Louis Fed](https://fredaccount.stlouisfed.org/apikeys)
 
 <h2>🛠️ Installation Steps:</h2>

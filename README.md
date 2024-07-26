@@ -10,19 +10,12 @@
 > [!NOTE]
 > This module is still evolving and may change. Feel free to build and experiment, but please don't rely on its stability just yet!
 
-**Brief Overview**
-<ul>
-    <li><b>Quantitative Analysis:</b> Utilizes hard data from analyst estimates and market indicators.</li>
-    <li><b>DCF Calculation:</b> Automates the DCF process, providing a streamlined method to estimate the intrinsic value of companies. Measures indictators to determine whether to utilize a 5 or 10 forecast</li>
-    <li><b>Customizable Inputs:</b> Allows users to input their own assumptions for various parameters to see how they affect the valuation.</li>
-    <li><b>Comprehensive Output:</b> Generates detailed reports on the estimated intrinsic value, including all intermediate calculations which can be changed to reflect an investors perceived forecast of the company</li>
-</ul>
 
 **Key Features and Scope**
 
 This project automates Discounted Cash Flow (DCF) calculations to estimate company value, using analyst EBIT and revenue estimates along with perpetual growth rates like 2-year government bond yields. 
 
-It allows for customizable inputs, such as reinvestment and tax rates, and integrates detailed financial data from various APIs, including industry metrics and macroeconomic indicators. Advanced metrics like Weighted Average Cost of Capital (WACC) and terminal value are computed.
+It allows for customizable inputs, such as reinvestment and tax rates, and integrates detailed financial data from various APIs, including industry metrics and macroeconomic indicators.
 
 **Subjectivity in DCF Analysis**
 

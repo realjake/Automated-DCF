@@ -8,6 +8,8 @@
 - Ability to change and identify trends within the data
 - Capitalize on short term polarizing events that misprice quality assets
 
+  
+
 > [!NOTE]
 > This module is still evolving and may change. Feel free to build and experiment, but please don't rely on its stability just yet!
 
@@ -28,9 +30,13 @@ Economic changes and technological progress also make it challenging to predict 
 > **Tip** To use this program, you will need to create an account and subscribe to the APIs listed below.
 
 
+
  [Financial Modeling Prep (PAID)](https://site.financialmodelingprep.com/developer/docs/pricing)
  
  [St. Louis Fed](https://fredaccount.stlouisfed.org/apikeys)
+
+
+
 
 <h2>🛠️ Installation Steps:</h2>
 

@@ -1,12 +1,8 @@
 import yfinance as yf
 
-
 ticker = 'META'
 
 yf_finance = yf.Ticker(ticker) 
-
-
-
 
 non_current_assets = yf_finance.quarterly_balance_sheet.loc['Total Non Current Assets'].iloc[0]
 net_liabilities = yf_finance.quarterly_balance_sheet.loc['Total Liabilities Net Minority Interest'].iloc[0]

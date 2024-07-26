@@ -1,7 +1,6 @@
 from finvizfinance.quote import *
 from dotenv import load_dotenv
 from datetime import datetime
-import statsmodels.api as sm
 from scipy import stats 
 import yfinance as yf
 import numpy as np
@@ -85,9 +84,9 @@ class DiscountedCashFlows:
         global current_year
         current_year = time.localtime().tm_year 
 
-        global peer_list
-
         # Grab Company Peers
+
+        global peer_list
 
         peer_list = self.request('v4', 'stock_peers')
         peer_list_df = pd.DataFrame(peer_list)

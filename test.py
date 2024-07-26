@@ -8,35 +8,30 @@ import os
 load_dotenv()
 fmp_api_key = os.getenv('FMP_API_KEY')
 
-def request(version=None, endpoint=None, symbol=None, period=None, exceptions=None):
-        try:
-            if symbol is None:
-                raise ValueError("Ticker symbol is required.")
-
-            if exceptions is not None:
-                url = exceptions
-            else:
-                if version is None or endpoint is None:
-                    raise ValueError("Both version and endpoint are required if exceptions URL is not provided.")
-                period_str = f'&period={period}' if period and (period == 'quarterly' or period == 'annual') else ''
-                url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{symbol}?apikey={fmp_api_key}{period_str}"
-
-            print(f"Request URL: {url}")
-
-            response = requests.get(url)
-
-            if response.status_code == 200:
-                data = response.json()
-                return data
-            else:
-                print(f"Request failed with status code: {response.status_code}")
-                return None
-
-        except Exception as e:
-            print(f"Error occurred while processing {symbol}: {e}")
+def request(symbol, version=None, endpoint=None, period=None, exceptions=None):
+    try:
+        if symbol is None:
+            raise ValueError("Ticker symbol is required.")
+        if exceptions is not None:
+            url = exceptions
+        else:
+            if version is None or endpoint is None:
+                raise ValueError("Both version and endpoint are required if exceptions URL is not provided.")
+            period_str = f'&period={period}' if period and (period == 'quarterly' or period == 'annual') else ''
+            url = f"https://financialmodelingprep.com/api/{version}/{endpoint}/{symbol}?apikey={fmp_api_key}{period_str}"
+        print(f"Request URL: {url}")
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            return data
+        else:
+            print(f"Request failed with status code: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Error occurred while processing {symbol}: {e}")
 
 symbol = 'AAPL'
-data_table = pd.DataFrame(request('v3', 'income-statement', symbol, 'annual'))
+data_table = pd.DataFrame(request(symbol, 'v3', 'income-statement', 'annual'))
 
 tax_rates = data_table['incomeTaxExpense'] / data_table['incomeBeforeTax']
         
@@ -66,12 +61,14 @@ else:
     print(f"No data fetched for symbol: {symbol}")
 
 
+symbol = 'AAPL'
 
+fmp_url = f'https://financialmodelingprep.com/api/v4/historical/shares_float?symbol={symbol}&apikey={fmp_api_key}'
 
-url = f'https://financialmodelingprep.com/api/v4/historical/shares_float?symbol={symbol}&apikey={fmp_api_key}'
-        
-increasing_share_count = pd.DataFrame(request(exceptions=url))
+increasing_share_count = pd.DataFrame(request(symbol, exceptions=fmp_url))
 # Ensure the 'date' column is in datetime format
+
+print(increasing_share_count)
 increasing_share_count['date'] = pd.to_datetime(increasing_share_count['date'])
 # Sort the DataFrame by date
 increasing_share_count = increasing_share_count.sort_values('date')

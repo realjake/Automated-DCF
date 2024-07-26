@@ -6,6 +6,7 @@
 
 - Removing Emotions from intrinsic value
 - Ability to change and identify trends within the data
+- Capitalize on short term polarizing events that misprice quality assets
 
 > [!NOTE]
 > This module is still evolving and may change. Feel free to build and experiment, but please don't rely on its stability just yet!

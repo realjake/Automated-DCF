@@ -10,7 +10,7 @@
 > [!NOTE]
 > This module is still evolving and may change. Feel free to build and experiment, but please don't rely on its stability just yet!
 
-Brief Overview
+**Brief Overview**
 <ul>
     <li><b>Quantitative Analysis:</b> Utilizes hard data from analyst estimates and market indicators.</li>
     <li><b>DCF Calculation:</b> Automates the DCF process, providing a streamlined method to estimate the intrinsic value of companies. Measures indictators to determine whether to utilize a 5 or 10 forecast</li>

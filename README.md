@@ -1,10 +1,16 @@
-<h1 align="center" id="title">Automated Discounted Cash Flow</h1>
+# Discounted Cash Flows Automated
 
 <p id="description">
     This tool is designed to calculate the perceived value of a company based strictly on quantitative figures. 
 </p>
 
-<h2>Brief Overview</h2>
+- Removing Emotions from intrinsic value
+- Ability to change and identify trends within the data
+
+> [!NOTE]
+> This module is still evolving and may change. Feel free to build and experiment, but please don't rely on its stability just yet!
+
+Brief Overview
 <ul>
     <li><b>Quantitative Analysis:</b> Utilizes hard data from analyst estimates and market indicators.</li>
     <li><b>DCF Calculation:</b> Automates the DCF process, providing a streamlined method to estimate the intrinsic value of companies. Measures indictators to determine whether to utilize a 5 or 10 forecast</li>
@@ -12,101 +18,12 @@
     <li><b>Comprehensive Output:</b> Generates detailed reports on the estimated intrinsic value, including all intermediate calculations which can be changed to reflect an investors perceived forecast of the company</li>
 </ul>
 
+Key Features and Scope
+This project automates Discounted Cash Flow (DCF) calculations to estimate company value, using analyst EBIT and revenue estimates along with perpetual growth rates like 2-year government bond yields. It allows for customizable inputs, such as reinvestment and tax rates, and integrates detailed financial data from various APIs, including industry metrics and macroeconomic indicators. Advanced metrics like Weighted Average Cost of Capital (WACC) and terminal value are computed.
 
+Subjectivity in DCF Analysis
+Discounted Cash Flow (DCF) analysis is inherently subjective because it relies on factors like market sentiment, competitive landscape, and the quality of management, all of which can affect valuations. Economic changes and technological progress also make it challenging to predict future performance accurately. On a short-term basis, investor sentiment and large buy or sell orders can sway stock prices, presenting opportunities for strategic trades. This program aims to offer a clearer, more rational approach to understanding the often chaotic stock market.
 
-<h2>Key Features</h2>
-<ul>
-    <li><b>Quantitative Analysis:</b>
-        <ul>
-            <li>Utilizes hard data from analyst estimates for EBIT and revenue growth.</li>
-            <li>Incorporates current perpetual growth rates like 2-year government bond rates.</li>
-        </ul>
-    </li>
-    <li><b>Automated DCF Calculation:</b>
-        <ul>
-            <li>Automates the Discounted Cash Flow (DCF) process to estimate the intrinsic value of companies.</li>
-            <li>Evaluates multiple factors to determine whether to utilize a 5-year or 10-year DCF analysis, including revenue growth variability, stock lifetime, and sector stability.</li>
-        </ul>
-    </li>
-    <li><b>Customizable Inputs:</b>
-        <ul>
-            <li>Allows users to input their own assumptions for various parameters such as reinvestment rates, tax rates, and growth rates to see how these affect the valuation.</li>
-        </ul>
-    </li>
-    <li><b>Comprehensive Data Integration:</b>
-        <ul>
-            <li>Fetches detailed financial statements (balance sheets, income statements, and cash flow statements) from Financial Modeling Prep API.</li>
-            <li>Calculates industry-specific metrics like unlevered beta and industry reinvestment rates using data from company peers.</li>
-            <li>Integrates country-specific equity risk premiums and macroeconomic indicators from sources like FRED API and Yahoo Finance.</li>
-        </ul>
-    </li>
-    <li><b>Advanced Financial Metrics:</b>
-        <ul>
-            <li>Computes Weighted Average Cost of Capital (WACC) considering market risk premiums, cost of debt, and cost of equity.</li>
-            <li>Estimates terminal value using final year free cash flow to firm (FCFF) and perpetual growth rate.</li>
-            <li>Calculates historical and industry reinvestment rates, adjusting for capital expenditure and working capital changes.</li>
-        </ul>
-    </li>
-    <li><b>Error Handling and Debugging:</b>
-        <ul>
-            <li>Implements try-except blocks to manage API request errors and ensure continuous data retrieval.</li>
-            <li>Provides detailed print statements for debugging and monitoring the data fetching process.</li>
-        </ul>
-    </li>
-    <li><b>Detailed Output Reports:</b>
-        <ul>
-            <li>Generates detailed reports on all intermediate calculations including reinvestment rates, WACC components, and FCFF.</li>
-            <li>Offers a final fair value estimation compared against current market value, including a sensitivity analysis to see multiple outcomes.</li>
-        </ul>
-    </li>
-    <li><b>Technical Analysis Integration:</b>
-        <ul>
-            <li>Adjusts levered beta for tax and debt-equity ratios to derive unlevered beta for industry comparison.</li>
-            <li>Analyzes revenue growth variability to assess stability and predictability of future cash flows.</li>
-        </ul>
-    </li>
-    <li><b>Historical Data Utilization:</b>
-        <ul>
-            <li>Leverages historical financial data to calculate trimmed mean reinvestment rates and historical revenue growth patterns.</li>
-            <li>Utilizes long-term historical data to support more accurate future projections in the DCF model.</li>
-        </ul>
-    </li>
-    <li><b>Comprehensive Assumptions and Outputs:</b>
-        <ul>
-            <li>Clearly documents assumptions for EBIT margins, revenue growth, tax rates, and FCFF.</li>
-            <li>Considers non-current assets, net liabilities, and cash holdings in the final equity value calculation.</li>
-        </ul>
-    </li>
-</ul>
-
-<h2>Why DCF is Subjective</h2>
-<p>
-    While DCF is a powerful tool for valuation, it's important to understand its inherent subjectivity due to several factors:
-</p>
-
-<h3>Qualitative Factors</h3>
-<ul>
-    <li><b>Market Sentiment:</b> Investor psychology and market conditions can lead to deviations from intrinsic value. Since this project aims to ultiize average analyst consensus we can get a unbias population </li>
-    <li><b>Competitive Landscape:</b> Industry dynamics, competitive positioning, and potential market disruptions are qualitative factors that aren't fully captured by quantitative models.</li>
-    <li><b>Management Quality:</b> The effectiveness of a company's leadership and their strategic decisions can influence future performance.</li>
-</ul>
-
-<h3>Changing Fundamentals</h3>
-<ul>
-    <li><b>Economic Conditions:</b> Macroeconomic factors and geopolitical events can alter a company's future prospects.</li>
-    <li><b>Technological Advancements:</b> Innovation and technological changes can impact a company’s growth trajectory and competitive advantage.</li>
-</ul>
-
-<h2>Project Scope</h2>
-<p>
-    This project focuses on the quantitative aspects of DCF analysis, providing a robust framework to calculate perceived value based on the following inputs:
-</p>
-<ul>
-    <li><b>Analyst EBIT Estimates:</b> Earnings before interest and taxes as projected by financial analysts.</li>
-    <li><b>Analyst Revenue Growth Estimates:</b> Expected growth rates for company revenue.</li>
-    <li><b>Perpetual Growth Rate:</b> Typically derived from long-term government bond yields to represent a stable growth rate.</li>
-    <li><b>Effective Tax Rate Predictions:</b> Anticipated tax rates applied to future earnings.</li>
-</ul>
 
 <h2>🛠️ Installation Steps:</h2>
 

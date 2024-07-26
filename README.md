@@ -25,6 +25,10 @@ Discounted Cash Flow (DCF) analysis is inherently subjective because it relies o
 Economic changes and technological progress also make it challenging to predict future performance accurately. On a short-term basis, investor sentiment and large buy or sell orders can sway stock prices, presenting opportunities for strategic trades. This program aims to offer a clearer, more rational approach to understanding the often chaotic stock market.
 
 
+> **Tip** For this program to function you will need to create an account and pay for some of these apis below
+> [Financial Modeling Prep (PAID)](https://site.financialmodelingprep.com/developer/docs/pricing)
+>  [St. Louis Fed](https://fredaccount.stlouisfed.org/apikeys)
+
 <h2>🛠️ Installation Steps:</h2>
 
 <p>1. Clone the Repository:</p>

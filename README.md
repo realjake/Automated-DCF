@@ -1,4 +1,4 @@
-# Discounted Cash Flows Automated
+# Automated Discounted Cash Flows 
 
 <p id="description">
     This tool is designed to calculate the perceived value of a company based strictly on quantitative figures. 
